@@ -1,4 +1,5 @@
 # from https://github.com/aiortc/aiortc/issues/100
+# and https://stackoverflow.com/questions/56582908/webrtc-connection-on-localhost-without-an-internet-connection
 
 import asyncio
 import json
@@ -114,15 +115,15 @@ if __name__ == '__main__':
     app.router.add_post('/client', client_sdp)
     app.router.add_post('/listener', listener_sdp)
 
-    cors = aiohttp_cors.setup(app, defaults={
-        "*": aiohttp_cors.ResourceOptions(
-            allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
-        )
-    })
-
-    for route in list(app.router.routes()):
-        cors.add(route)
+    # cors = aiohttp_cors.setup(app, defaults={
+    #     "*": aiohttp_cors.ResourceOptions(
+    #         allow_credentials=True,
+    #         expose_headers="*",
+    #         allow_headers="*",
+    #     )
+    # })
+    #
+    # for route in list(app.router.routes()):
+    #     cors.add(route)
 
     web.run_app(app, port=4000)

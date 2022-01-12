@@ -22,24 +22,24 @@ function createPeerConnection() {
     pc = new RTCPeerConnection(config);
 
     // register some listeners to help debugging
-    pc.addEventListener('icegatheringstatechange', function() {
+    pc.addEventListener('icegatheringstatechange', function () {
         iceGatheringLog.textContent += ' -> ' + pc.iceGatheringState;
     }, false);
     iceGatheringLog.textContent = pc.iceGatheringState;
 
-    pc.addEventListener('iceconnectionstatechange', function() {
+    pc.addEventListener('iceconnectionstatechange', function () {
         iceConnectionLog.textContent += ' -> ' + pc.iceConnectionState;
     }, false);
     iceConnectionLog.textContent = pc.iceConnectionState;
 
-    pc.addEventListener('signalingstatechange', function() {
+    pc.addEventListener('signalingstatechange', function () {
         signalingLog.textContent += ' -> ' + pc.signalingState;
     }, false);
     signalingLog.textContent = pc.signalingState;
 
     // connect audio / video
-    pc.addEventListener('track', function(evt) {
-        if (evt.track.kind == 'video')
+    pc.addEventListener('track', function (evt) {
+        if (evt.track.kind === 'video')
             document.getElementById('video').srcObject = evt.streams[0];
         else
             document.getElementById('audio').srcObject = evt.streams[0];
@@ -49,11 +49,11 @@ function createPeerConnection() {
 }
 
 function negotiate() {
-    return pc.createOffer().then(function(offer) {
+    return pc.createOffer().then(function (offer) {
         return pc.setLocalDescription(offer);
-    }).then(function() {
+    }).then(function () {
         // wait for ICE gathering to complete
-        return new Promise(function(resolve) {
+        return new Promise(function (resolve) {
             if (pc.iceGatheringState === 'complete') {
                 resolve();
             } else {
@@ -63,10 +63,11 @@ function negotiate() {
                         resolve();
                     }
                 }
+
                 pc.addEventListener('icegatheringstatechange', checkState);
             }
         });
-    }).then(function() {
+    }).then(function () {
         var offer = pc.localDescription;
         var codec;
 
@@ -92,12 +93,12 @@ function negotiate() {
             },
             method: 'POST'
         });
-    }).then(function(response) {
+    }).then(function (response) {
         return response.json();
-    }).then(function(answer) {
+    }).then(function (answer) {
         document.getElementById('answer-sdp').textContent = answer.sdp;
         return pc.setRemoteDescription(answer);
-    }).catch(function(e) {
+    }).catch(function (e) {
         alert(e);
     });
 }
@@ -122,19 +123,19 @@ function start() {
         var parameters = JSON.parse(document.getElementById('datachannel-parameters').value);
 
         dc = pc.createDataChannel('chat', parameters);
-        dc.onclose = function() {
+        dc.onclose = function () {
             clearInterval(dcInterval);
             dataChannelLog.textContent += '- close\n';
         };
-        dc.onopen = function() {
+        dc.onopen = function () {
             dataChannelLog.textContent += '- open\n';
-            dcInterval = setInterval(function() {
+            dcInterval = setInterval(function () {
                 var message = 'ping ' + current_stamp();
                 dataChannelLog.textContent += '> ' + message + '\n';
                 dc.send(message);
             }, 1000);
         };
-        dc.onmessage = function(evt) {
+        dc.onmessage = function (evt) {
             dataChannelLog.textContent += '< ' + evt.data + '\n';
 
             if (evt.data.substring(0, 4) === 'pong') {
@@ -162,21 +163,23 @@ function start() {
         }
     }
 
-    if (constraints.audio || constraints.video) {
-        if (constraints.video) {
-            document.getElementById('media').style.display = 'block';
-        }
-        navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-            stream.getTracks().forEach(function(track) {
-                pc.addTrack(track, stream);
-            });
-            return negotiate();
-        }, function(err) {
-            alert('Could not acquire media: ' + err);
-        });
-    } else {
-        negotiate();
-    }
+    // if (constraints.audio || constraints.video) {
+    //     if (constraints.video) {
+    document.getElementById('media').style.display = 'block';
+    // }
+    pc.addTransceiver("audio");
+    pc.addTransceiver("video");
+    // navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+    //     stream.getTracks().forEach(function(track) {
+    //         pc.addTrack(track, stream);
+    //     });
+    //     return negotiate();
+    // }, function(err) {
+    //     alert('Could not acquire media: ' + err);
+    // });
+    // } else {
+    negotiate();
+    // }
 
     document.getElementById('stop').style.display = 'inline-block';
 }
@@ -191,7 +194,7 @@ function stop() {
 
     // close transceivers
     if (pc.getTransceivers) {
-        pc.getTransceivers().forEach(function(transceiver) {
+        pc.getTransceivers().forEach(function (transceiver) {
             if (transceiver.stop) {
                 transceiver.stop();
             }
@@ -199,12 +202,12 @@ function stop() {
     }
 
     // close local audio / video
-    pc.getSenders().forEach(function(sender) {
+    pc.getSenders().forEach(function (sender) {
         sender.track.stop();
     });
 
     // close peer connection
-    setTimeout(function() {
+    setTimeout(function () {
         pc.close();
     }, 500);
 }
@@ -214,7 +217,7 @@ function sdpFilterCodec(kind, codec, realSdp) {
     var rtxRegex = new RegExp('a=fmtp:(\\d+) apt=(\\d+)\r$');
     var codecRegex = new RegExp('a=rtpmap:([0-9]+) ' + escapeRegExp(codec))
     var videoRegex = new RegExp('(m=' + kind + ' .*?)( ([0-9]+))*\\s*$')
-    
+
     var lines = realSdp.split('\n');
 
     var isKind = false;

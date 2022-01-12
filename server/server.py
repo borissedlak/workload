@@ -6,12 +6,16 @@ import os
 import ssl
 import uuid
 
-import cv2
-from aiohttp import web
-from av import VideoFrame
+# used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
 
+
+import cv2 as cv2
+from cv2 import dnn
+from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
+from av import VideoFrame
+from Detector import *
 
 ROOT = os.path.dirname(__file__)
 
@@ -19,7 +23,11 @@ logger = logging.getLogger("pc")
 pcs = set()
 relay = MediaRelay()
 
-faceCascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
+# faceCascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
+faceCascade = cv2.CascadeClassifier('cascades/haarcascade_fullbody.xml')
+transformTrack = None
+
+detector = Detector(use_cuda=True)
 
 class VideoTransformTrack(MediaStreamTrack):
     """
@@ -36,22 +44,26 @@ class VideoTransformTrack(MediaStreamTrack):
     async def recv(self):
         frame = await self.track.recv()
         img = frame.to_ndarray(format="bgr24")
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = faceCascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            # minSize=(30, 30)
-            # flags = cv2.cv.CV_HAAR_SCALE_IMAGE
-        )
+        # detector.processSingleFrame(img)
+        detector.processImage(img=img)
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # faces = faceCascade.detectMultiScale(
+        #     gray,
+        #     scaleFactor=1.1, # 1 ist slowest but detects the most
+        #     # minNeighbors=5,
+        #     minSize=(30, 30),
+        #     # flags=cv2.CASCADE_SCALE_IMAGE
+        # )
 
-        for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        cv2.imshow("Faces found", img)
-        new_frame = VideoFrame.from_ndarray(img, format="bgr24")
+
+        # for (x, y, w, h) in faces:
+        #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        new_frame = VideoFrame.from_ndarray(detector.img, format="bgr24")
         new_frame.pts = frame.pts
         new_frame.time_base = frame.time_base
         return new_frame
+
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
@@ -78,6 +90,7 @@ async def offer(request):
 
     # prepare local media
     player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
+    video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
     else:
@@ -99,19 +112,25 @@ async def offer(request):
 
     @pc.on("track")
     def on_track(track):
+        global transformTrack
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
-            pc.addTrack(player.audio)
+            # pc.addTrack(player.audio)
             recorder.addTrack(track)
+            # pc.addTrack(video_player.audio)
+
         elif track.kind == "video":
-            pc.addTrack(
-                VideoTransformTrack(
-                    relay.subscribe(track), transform=params["video_transform"]
+
+            if transformTrack is None:
+                transformTrack = VideoTransformTrack(
+                    relay.subscribe(video_player.video), transform=params["video_transform"]
                 )
-            )
-            if args.record_to:
-                recorder.addTrack(relay.subscribe(track))
+
+            pc.addTrack(transformTrack)
+            # pc.addTrack(videoPlayer.video)
+            # if args.record_to:
+            #     recorder.addTrack(relay.subscribe(track))
 
         @track.on("ended")
         async def on_ended():

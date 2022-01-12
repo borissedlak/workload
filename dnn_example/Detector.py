@@ -1,12 +1,11 @@
 import math
+from os.path import dirname, join
 
+import cv2
 import imutils
 import numpy as np
-import cv2
 from cv2 import dnn
 from imutils.video import FPS
-
-from os.path import dirname, join
 
 protoPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.prototxt")
 modelPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.caffemodel")
@@ -52,7 +51,7 @@ class Detector:
 
         while success:
             self.processFrame()
-            cv2.imshow("outpt", self.img)
+            # cv2.imshow("outpt", self.img)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
@@ -69,10 +68,9 @@ class Detector:
         print("FPS: {:.2f}".format(fps.fps()))
 
         cap.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
     def processFrame(self):
-        # frame = imutils.resize(self.img, width=800)
         blob = cv2.dnn.blobFromImage(self.img, 1.0, (300, 300), (104.0, 177.0, 123),
                                      swapRB=False, crop=False)
         self.faceModel.setInput(blob)
@@ -83,10 +81,43 @@ class Detector:
                 bbox = predictions[0, 0, i, 3:7] * np.array([self.width, self.height, self.width, self.height])
                 (xmin, ymin, xmax, ymax) = bbox.astype("int")
 
-                cv2.rectangle(self.img, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
-                # cv2.blur(self.img)
+                # highlight section
+                # cv2.rectangle(self.img, (xmin, ymin), (xmax, ymax), (0, 0, 255), -2)  # negative thickness means fill
 
-    def anonymize_face_pixelate(self, image, blocks=3):
+                # blur section
+                face_pixels = self.img[ymin:ymax, xmin:xmax]
+                # face_blurred = self.anonymize_face_simple(face_pixels)
+                face_blurred = self.anonymize_face_pixelate(face_pixels, blocks=5)
+                self.img[ymin:ymax, xmin:xmax] = face_blurred
+
+    # ##################################################################################################################
+    # ########  Transformation methods  ################################################################################
+    # ##################################################################################################################
+
+    @staticmethod
+    def anonymize_face_simple(image, factor=3.0):
+        if image is None or image.size == 0:
+            return image
+
+        # automatically determine the size of the blurring kernel based
+        # on the spatial dimensions of the input image
+        (h, w) = image.shape[:2]
+        kW = int(w / factor)
+        kH = int(h / factor)
+        # ensure the width of the kernel is odd
+        if kW % 2 == 0:
+            kW -= 1
+        # ensure the height of the kernel is odd
+        if kH % 2 == 0:
+            kH -= 1
+
+        # cv2.imshow("abcd", cv2.GaussianBlur(src=image, ksize=(kW, kH), sigmaX=0))
+        # apply a Gaussian blur to the input image using our computed kernel size
+        return cv2.GaussianBlur(src=image, ksize=(kW, kH), sigmaX=0)
+
+    # more blocks mean more computation, but looks better
+    @staticmethod
+    def anonymize_face_pixelate(image, blocks=3):
         # divide the input image into NxN blocks
         (h, w) = image.shape[:2]
         xSteps = np.linspace(0, w, blocks + 1, dtype="int")

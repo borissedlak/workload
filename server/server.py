@@ -1,3 +1,8 @@
+# from https://sparkle-mdm.medium.com/python-real-time-facial-recognition-identification-with-cuda-enabled-4819844ffc80
+# and https://www.youtube.com/watch?v=HsuKxjQhFU0
+# and https://www.youtube.com/watch?v=GXcy7Di1oys
+# and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
+
 import argparse
 import asyncio
 import json
@@ -6,16 +11,14 @@ import os
 import ssl
 import uuid
 
-# used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
-
-
-import cv2 as cv2
-from cv2 import dnn
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 from av import VideoFrame
+
 from Detector import *
+
+# used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
 
 ROOT = os.path.dirname(__file__)
 
@@ -24,16 +27,13 @@ pcs = set()
 relay = MediaRelay()
 
 # faceCascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
-faceCascade = cv2.CascadeClassifier('cascades/haarcascade_fullbody.xml')
+# faceCascade = cv2.CascadeClassifier('cascades/haarcascade_fullbody.xml')
 transformTrack = None
 
-detector = Detector(use_cuda=True)
+detector = Detector(use_cuda=True, output_width=100)
+
 
 class VideoTransformTrack(MediaStreamTrack):
-    """
-    A video stream track that transforms frames from another track.
-    """
-
     kind = "video"
 
     def __init__(self, track, transform):
@@ -44,20 +44,7 @@ class VideoTransformTrack(MediaStreamTrack):
     async def recv(self):
         frame = await self.track.recv()
         img = frame.to_ndarray(format="bgr24")
-        # detector.processSingleFrame(img)
         detector.processImage(img=img)
-        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # faces = faceCascade.detectMultiScale(
-        #     gray,
-        #     scaleFactor=1.1, # 1 ist slowest but detects the most
-        #     # minNeighbors=5,
-        #     minSize=(30, 30),
-        #     # flags=cv2.CASCADE_SCALE_IMAGE
-        # )
-
-
-        # for (x, y, w, h) in faces:
-        #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
         new_frame = VideoFrame.from_ndarray(detector.img, format="bgr24")
         new_frame.pts = frame.pts
@@ -75,7 +62,7 @@ async def javascript(request):
     return web.Response(content_type="application/javascript", text=content)
 
 
-async def offer(request):
+async def consume(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
@@ -89,7 +76,7 @@ async def offer(request):
     log_info("Created for %s", request.remote)
 
     # prepare local media
-    player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
+    # player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
     video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
@@ -191,7 +178,7 @@ if __name__ == "__main__":
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_get("/client.js", javascript)
-    app.router.add_post("/offer", offer)
+    app.router.add_post("/consume", consume)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

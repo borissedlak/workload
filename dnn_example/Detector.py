@@ -1,3 +1,5 @@
+# from https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
+
 import math
 from os.path import dirname, join
 
@@ -13,6 +15,7 @@ modelPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.caffemodel")
 
 class Detector:
     def __init__(self, use_cuda=False, output_width=200, confidence_threshold=0.5):
+        # I can use caffe, tensorflow, or pytorch
         self.faceModel = cv2.dnn.readNetFromCaffe(protoPath, caffeModel=modelPath)
         self.img = None
         self.output_width = output_width

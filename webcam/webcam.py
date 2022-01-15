@@ -67,27 +67,6 @@ async def offer(request):
     # open media source
     audio, video = create_local_tracks(args.play_from)
 
-    @pc.on("track")
-    def on_track(track):
-        log_info("Track %s received", track.kind)
-
-        if track.kind == "audio":
-            pc.addTrack(player.audio)
-            recorder.addTrack(track)
-        elif track.kind == "video":
-            pc.addTrack(
-                VideoTransformTrack(
-                    relay.subscribe(track), transform=params["video_transform"]
-                )
-            )
-            if args.record_to:
-                recorder.addTrack(relay.subscribe(track))
-
-        @track.on("ended")
-        async def on_ended():
-            log_info("Track %s ended", track.kind)
-            await recorder.stop()
-
     await pc.setRemoteDescription(offer)
     for t in pc.getTransceivers():
         if t.kind == "audio" and audio:

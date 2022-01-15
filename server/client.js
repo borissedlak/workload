@@ -4,10 +4,7 @@ var dataChannelLog = document.getElementById('data-channel'),
     iceGatheringLog = document.getElementById('ice-gathering-state'),
     signalingLog = document.getElementById('signaling-state');
 
-// peer connection
 var pc = null;
-
-// data channel
 var dc = null, dcInterval = null;
 
 function createPeerConnection() {
@@ -167,19 +164,10 @@ function start() {
     //     if (constraints.video) {
     document.getElementById('media').style.display = 'block';
     // }
-    pc.addTransceiver("audio");
-    pc.addTransceiver("video");
-    // navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-    //     stream.getTracks().forEach(function(track) {
-    //         pc.addTrack(track, stream);
-    //     });
-    //     return negotiate();
-    // }, function(err) {
-    //     alert('Could not acquire media: ' + err);
-    // });
-    // } else {
+    // pc.addTransceiver("audio");
+    // pc.addTransceiver("video");
+
     negotiate();
-    // }
 
     document.getElementById('stop').style.display = 'inline-block';
 }

@@ -29,7 +29,7 @@ class TrackMux:
             frame = await self.track.recv()
             print('Track got frame: ', frame)
             for listener in self.listeners:
-                await listener.put(frame)
+                listener.put(frame)
 
 
 class ListenerTrack(VideoStreamTrack):
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     app.on_shutdown.append(on_shutdown)
 
     app.router.add_post('/client', client_sdp)
-    app.router.add_post('/listener', listener_sdp)
+    # app.router.add_post('/listener', listener_sdp)
 
     # cors = aiohttp_cors.setup(app, defaults={
     #     "*": aiohttp_cors.ResourceOptions(

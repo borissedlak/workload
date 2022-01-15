@@ -3,6 +3,8 @@
 # and https://www.youtube.com/watch?v=GXcy7Di1oys
 # and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
 
+# used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
+
 import argparse
 import asyncio
 import json
@@ -18,16 +20,16 @@ from av import VideoFrame
 
 from Detector import *
 
-# used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
+from sfu_example.server import TrackMux, ListenerTrack
 
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger("pc")
-pcs = set()
+providers = set()
+consumers = set()
+consumerTracks = set()
 relay = MediaRelay()
 
-# faceCascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
-# faceCascade = cv2.CascadeClassifier('cascades/haarcascade_fullbody.xml')
 transformTrack = None
 
 detector = Detector(use_cuda=True, output_width=100)
@@ -68,7 +70,7 @@ async def consume(request):
 
     pc = RTCPeerConnection()
     pc_id = "PeerConnection(%s)" % uuid.uuid4()
-    pcs.add(pc)
+    consumers.add(pc)
 
     def log_info(msg, *args):
         logger.info(pc_id + " " + msg, *args)
@@ -95,7 +97,7 @@ async def consume(request):
         log_info("Connection state is %s", pc.connectionState)
         if pc.connectionState == "failed":
             await pc.close()
-            pcs.discard(pc)
+            consumers.discard(pc)
 
     @pc.on("track")
     def on_track(track):
@@ -108,14 +110,17 @@ async def consume(request):
             # pc.addTrack(video_player.audio)
 
         elif track.kind == "video":
-
             if transformTrack is None:
                 transformTrack = VideoTransformTrack(
-                    relay.subscribe(video_player.video), transform=params["video_transform"]
+                    relay.subscribe(list(providers)[0].getTransceivers()[0].receiver.track), transform=params["video_transform"]
                 )
 
             pc.addTrack(transformTrack)
-            # pc.addTrack(videoPlayer.video)
+
+            # track = ListenerTrack()
+            # consumerTracks.add(track)
+            # pc.addTrack(list(providers)[0].getTransceivers()[0].receiver.track)
+            # consumers.add(pc)
             # if args.record_to:
             #     recorder.addTrack(relay.subscribe(track))
 
@@ -140,11 +145,41 @@ async def consume(request):
     )
 
 
+async def provide(request):
+    params = await request.json()
+    offer = RTCSessionDescription(sdp=params['sdp'], type='offer')
+
+    pc = RTCPeerConnection()
+    providers.add(pc)
+    print('Number of clients: ', len(providers))
+
+    @pc.on('track')
+    async def on_track(track):
+        tm = TrackMux(track)
+        for lt in consumerTracks:
+            print('Added track to listener: ', track, lt)
+            tm.addListener(lt.queue())
+        await tm.run()
+
+    await pc.setRemoteDescription(offer)
+    answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    return web.Response(
+        content_type='application/json',
+        text=json.dumps({
+            'sdp': pc.localDescription.sdp,
+            'type': 'answer'
+        })
+    )
+
+
 async def on_shutdown(app):
     # close peer connections
-    coros = [pc.close() for pc in pcs]
+    coros = [pc.close() for pc in providers] + [pc.close() for pc in consumers]
     await asyncio.gather(*coros)
-    pcs.clear()
+    providers.clear()
+    consumers.clear()
 
 
 if __name__ == "__main__":
@@ -157,7 +192,7 @@ if __name__ == "__main__":
         "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
+        "--port", type=int, default=4000, help="Port for HTTP server (default: 4000)"
     )
     parser.add_argument("--record-to", help="Write received media to a file."),
     parser.add_argument("--verbose", "-v", action="count")
@@ -178,6 +213,7 @@ if __name__ == "__main__":
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_get("/client.js", javascript)
+    app.router.add_post('/client', provide)
     app.router.add_post("/consume", consume)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

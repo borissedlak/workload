@@ -20,7 +20,6 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 from av import VideoFrame
 
-global_queue = ContextVar('global_queue')
 
 from Detector import *
 from sfu_example.server import TrackMux
@@ -30,12 +29,12 @@ ROOT = os.path.dirname(__file__)
 logger = logging.getLogger("pc")
 providers = set()
 providerTracks = list()
-providerTrackMucks = list()
+transformedTracks = list()
 consumers = set()
 consumerTracks = set()
 relay = MediaRelay()
 
-transformTrack = None
+# transformTrack = None
 
 detector = Detector(use_cuda=True)
 
@@ -47,37 +46,42 @@ class VideoTransformTrack(MediaStreamTrack):
         super().__init__()
         self.track = track
         self.transform = transform
-        self.prev_frame_time = 0
-        self.new_frame_time = 0
-        # self.run()
+        self.prev_time_receive = 0
+        self.new_time_receive = 0
+        self.prev_time_transform = 0
+        self.new_time_transform = 0
+        self.frame_queue = asyncio.Queue()
 
-    # def run(self):
-    #     asyncio.create_task(self.__run_receive())
-    #
-    # async def __run_receive(self):
-    #     while True:
-    #         frame = await self.track.recv()
-    #         self.new_frame_time = time.time()
-    #         dif = self.new_frame_time - self.prev_frame_time
-    #         if dif != 0:
-    #             fps = 1 / dif
-    #             self.prev_frame_time = self.new_frame_time
-    #             print("Queue Receive FPS: " + str(fps))
-    #         await self.frame_queue.put(frame)
+    async def run(self):
+        asyncio.create_task(self.__run_receive())
+
+    async def __run_receive(self):
+        while True:
+            frame = await self.track.recv()
+            self.new_time_receive = time.time()
+            dif = self.new_time_receive - self.prev_time_receive
+
+            if dif != 0:
+                fps = 1 / dif
+                self.prev_time_receive = self.new_time_receive
+                print("Queue Receive FPS: " + str(fps))
+
+            if self.frame_queue.full():
+                self.frame_queue.get_nowait()
+            self.frame_queue.put_nowait(frame)
 
     async def recv(self):
         # await self.run()
-        try:
-            frame_queue = global_queue.get()
-        except LookupError:
-            frame_queue = asyncio.Queue(maxsize=30)
-            global_queue.set(frame_queue)
+        # try:
+        # except LookupError:
+        #     frame_queue = asyncio.Queue(maxsize=30)
+        #     global_queue.set(frame_queue)
 
-        frame = await frame_queue.get()
+        frame = await self.frame_queue.get()
 
-        self.new_frame_time = time.time()
-        fps = 1 / (self.new_frame_time - self.prev_frame_time)
-        self.prev_frame_time = self.new_frame_time
+        self.new_time_transform = time.time()
+        fps = 1 / (self.new_time_transform - self.prev_time_transform)
+        self.prev_time_transform = self.new_time_transform
         print("Transformation FPS: " + str(fps))
 
         img = frame.to_ndarray(format="bgr24")
@@ -136,7 +140,7 @@ async def consume(request):
 
     @pc.on("track")
     def on_track(track):
-        global transformTrack
+        # global transformTrack
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
@@ -145,15 +149,15 @@ async def consume(request):
             # pc.addTrack(video_player.audio)
 
         elif track.kind == "video":
-            if transformTrack is None:
-                # transformTrack = VideoTransformTrack(
-                #     relay.subscribe(video_player.video), transform=params["video_transform"]
-                # )
-                transformTrack = VideoTransformTrack(
-                    relay.subscribe(providerTracks[0]), transform=params["video_transform"]
-                )
+            # if transformTrack is None:
+            #     # transformTrack = VideoTransformTrack(
+            #     #     relay.subscribe(video_player.video), transform=params["video_transform"]
+            #     # )
+            #     transformTrack = VideoTransformTrack(
+            #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
+            #     )
 
-            pc.addTrack(transformTrack)
+            pc.addTrack(transformedTracks[0])
 
             # track = ListenerTrack()
             # consumerTracks.add(track)
@@ -197,15 +201,20 @@ async def provide(request):
     @pc.on('track')
     async def on_track(track):
         providerTracks.append(track)
-        tm = TrackMux(track)
+
+        transformTrack = VideoTransformTrack(
+            relay.subscribe(track), transform="dontknow"
+        )
+        await transformTrack.run()
+        transformedTracks.append(transformTrack)
+        # tm = TrackMux(track)
         # providerTrackMucks.append(tm)
         # for ct in consumerTracks:
         #     print('Added track to listener: ', track, ct)
         #
-        frame_queue = asyncio.Queue(maxsize=30)
-        global_queue.set(frame_queue)
-        tm.addListener(global_queue.get())
-        await tm.run()
+        # frame_queue = asyncio.Queue(maxsize=30)
+        # global_queue.set(frame_queue)
+        # tm.addListener(global_queue.get())
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()

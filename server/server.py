@@ -11,28 +11,29 @@ import json
 import logging
 import os
 import ssl
+import time
 import uuid
 
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
-from av import VideoFrame
 
 from Detector import *
-
-from sfu_example.server import TrackMux, ListenerTrack
+from sfu_example.server import TrackMux
 
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger("pc")
 providers = set()
+providerTracks = list()
 consumers = set()
 consumerTracks = set()
 relay = MediaRelay()
 
 transformTrack = None
 
-detector = Detector(use_cuda=True, output_width=100)
+detector = Detector(use_cuda=True)
+frame_queue = asyncio.Queue()
 
 
 class VideoTransformTrack(MediaStreamTrack):
@@ -42,16 +43,40 @@ class VideoTransformTrack(MediaStreamTrack):
         super().__init__()
         self.track = track
         self.transform = transform
+        self.prev_frame_time = 0
+        self.new_frame_time = 0
+        # self.run()
+
+    # def run(self):
+    #     asyncio.create_task(self.__run_receive())
+    #
+    # async def __run_receive(self):
+    #     while True:
+    #         frame = await self.track.recv()
+    #         self.new_frame_time = time.time()
+    #         dif = self.new_frame_time - self.prev_frame_time
+    #         if dif != 0:
+    #             fps = 1 / dif
+    #             self.prev_frame_time = self.new_frame_time
+    #             print("Queue Receive FPS: " + str(fps))
+    #         await self.frame_queue.put(frame)
 
     async def recv(self):
-        frame = await self.track.recv()
-        img = frame.to_ndarray(format="bgr24")
-        detector.processImage(img=img)
+        # await self.run()
+        # frame = await self.frame_queue.get()
 
-        new_frame = VideoFrame.from_ndarray(detector.img, format="bgr24")
-        new_frame.pts = frame.pts
-        new_frame.time_base = frame.time_base
-        return new_frame
+        # self.new_frame_time = time.time()
+        # fps = 1 / (self.new_frame_time - self.prev_frame_time)
+        # self.prev_frame_time = self.new_frame_time
+        # print("Transformation FPS: " + str(fps))
+
+        # img = frame.to_ndarray(format="bgr24")
+        # detector.processImage(img=img)
+
+        # new_frame = VideoFrame.from_ndarray(detector.img, format="bgr24")
+        # new_frame.pts = frame.pts
+        # new_frame.time_base = frame.time_base
+        return None
 
 
 async def index(request):
@@ -110,17 +135,23 @@ async def consume(request):
             # pc.addTrack(video_player.audio)
 
         elif track.kind == "video":
-            if transformTrack is None:
-                transformTrack = VideoTransformTrack(
-                    relay.subscribe(list(providers)[0].getTransceivers()[0].receiver.track), transform=params["video_transform"]
-                )
-
-            pc.addTrack(transformTrack)
+            # if transformTrack is None:
+            #     # transformTrack = VideoTransformTrack(
+            #     #     relay.subscribe(video_player.video), transform=params["video_transform"]
+            #     # )
+            #     transformTrack = VideoTransformTrack(
+            #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
+            #     )
+            #
+            # pc.addTrack(transformTrack)
 
             # track = ListenerTrack()
             # consumerTracks.add(track)
-            # pc.addTrack(list(providers)[0].getTransceivers()[0].receiver.track)
+            # pc.addTrack(track)
             # consumers.add(pc)
+
+            pc.addTrack(providerTracks[0])
+
             # if args.record_to:
             #     recorder.addTrack(relay.subscribe(track))
 
@@ -155,10 +186,11 @@ async def provide(request):
 
     @pc.on('track')
     async def on_track(track):
+        providerTracks.append(track)
         tm = TrackMux(track)
-        for lt in consumerTracks:
-            print('Added track to listener: ', track, lt)
-            tm.addListener(lt.queue())
+        for ct in consumerTracks:
+            print('Added track to listener: ', track, ct)
+            tm.addListener(frame_queue)
         await tm.run()
 
     await pc.setRemoteDescription(offer)

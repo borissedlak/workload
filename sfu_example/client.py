@@ -20,7 +20,8 @@ async def negotiate(request):
     await pc.setLocalDescription(offer)
 
     if args.media_source:
-        mediaSource = MediaPlayer(args.media_source)
+        options = {"framerate": "30", "video_size": "640x480"}
+        mediaSource = MediaPlayer(args.media_source, options=options)
     else:
         options = {"framerate": "30", "video_size": "640x480"}
         mediaSource = MediaPlayer(
@@ -51,11 +52,11 @@ if __name__ == "__main__":
         "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )
     parser.add_argument(
-        "--port", type=int, default=8081, help="Port for HTTP server (default: 8080)"
+        "--port", type=int, default=8081, help="Port for HTTP server (default: 8081)"
     )
     parser.add_argument("--record-to", help="Write received media to a file."),
     parser.add_argument("--verbose", "-v", action="count")
-    parser.add_argument("--media-source", action="Path of video or leave empty for webcam")
+    parser.add_argument("--media-source", help="Path of video or leave empty for webcam")
     args = parser.parse_args()
 
     if args.verbose:

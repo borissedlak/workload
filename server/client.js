@@ -165,7 +165,7 @@ function start() {
     document.getElementById('media').style.display = 'block';
     // }
     // pc.addTransceiver("audio");
-    // pc.addTransceiver("video");
+    pc.addTransceiver("video");
 
     negotiate();
 

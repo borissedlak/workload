@@ -3,20 +3,28 @@
 
 import asyncio
 import json
+import time
+import cv2
 
-import aiohttp_cors
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+from av import VideoFrame
+
+from Detector import Detector
 
 clients = set()
 listeners = set()
 listenerTracks = set()
+
+detector = Detector(use_cuda=True, output_width=100)
 
 
 class TrackMux:
     def __init__(self, track):
         self.listeners = set()
         self.track = track
+        self.prev_frame_time = 1
+        self.new_frame_time = 1
 
     def addListener(self, listener):
         self.listeners.add(listener)
@@ -27,7 +35,12 @@ class TrackMux:
     async def __run_mux(self):
         while True:
             frame = await self.track.recv()
-            print('Track got frame: ', frame)
+            self.new_frame_time = time.time()
+            fps = 1 / (self.new_frame_time - self.prev_frame_time)
+            self.prev_frame_time = self.new_frame_time
+            print("Producer FPS: " + str(fps))
+
+            # print('Track got frame: ', frame)
             for listener in self.listeners:
                 listener.put(frame)
 

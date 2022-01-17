@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import ssl
+import threading
 import time
 import uuid
 from contextvars import ContextVar
@@ -36,11 +37,12 @@ relay = MediaRelay()
 
 # transformTrack = None
 
-detector = Detector(use_cuda=True)
+detector = Detector(use_cuda=False)
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
+    global_queue = ContextVar("global_queue")
 
     def __init__(self, track, transform):
         super().__init__()
@@ -53,7 +55,12 @@ class VideoTransformTrack(MediaStreamTrack):
         self.frame_queue = asyncio.Queue()
 
     async def run(self):
-        asyncio.create_task(self.__run_receive())
+        th = threading.Thread(target=self.__run_receive)
+        th.start()
+        # loop = asyncio.get_running_loop()
+        # loop.run_until_complete(self.__run_receive())
+        # loop.run_until_complete(self.__run_receive(loop))
+        # asyncio.run(self.__run_receive())
 
     async def __run_receive(self):
         while True:

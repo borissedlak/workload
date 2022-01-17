@@ -4,11 +4,10 @@
 import asyncio
 import json
 import time
-import cv2
+from contextvars import ContextVar
 
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-from av import VideoFrame
 
 from Detector import Detector
 
@@ -18,31 +17,42 @@ listenerTracks = set()
 
 detector = Detector(use_cuda=True, output_width=100)
 
+global_queue = ContextVar('global_queue')
 
 class TrackMux:
     def __init__(self, track):
         self.listeners = set()
         self.track = track
-        self.prev_frame_time = 1
-        self.new_frame_time = 1
+        self.prev_frame_time = 0
+        self.new_frame_time = 0
 
     def addListener(self, listener):
         self.listeners.add(listener)
 
     async def run(self):
+        try:
+            global_queue.get()
+        except LookupError:
+            frame_queue = asyncio.Queue(maxsize=30)
+            global_queue.set(frame_queue)
         asyncio.create_task(self.__run_mux())
 
     async def __run_mux(self):
         while True:
             frame = await self.track.recv()
             self.new_frame_time = time.time()
-            fps = 1 / (self.new_frame_time - self.prev_frame_time)
-            self.prev_frame_time = self.new_frame_time
-            print("Producer FPS: " + str(fps))
+            dif = self.new_frame_time - self.prev_frame_time
+            if dif != 0:
+                fps = 1 / dif
+                self.prev_frame_time = self.new_frame_time
+                print("Producer FPS: " + str(fps))
 
-            # print('Track got frame: ', frame)
-            for listener in self.listeners:
-                listener.put(frame)
+
+            # print('No of Listeners', len(self.listeners))
+            frame_queue = global_queue.get()
+            if frame_queue.full():
+                frame_queue.get_nowait()
+            frame_queue.put_nowait(frame)
 
 
 class ListenerTrack(VideoStreamTrack):

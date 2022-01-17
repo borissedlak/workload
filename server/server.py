@@ -4,6 +4,7 @@
 # and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
 
 # used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
+# commented in rtcrtpreceiver.py
 
 import argparse
 import asyncio
@@ -11,19 +12,15 @@ import json
 import logging
 import os
 import ssl
-import threading
 import time
 import uuid
-from contextvars import ContextVar
 
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 from av import VideoFrame
 
-
 from Detector import *
-from sfu_example.server import TrackMux
 
 ROOT = os.path.dirname(__file__)
 
@@ -37,12 +34,11 @@ relay = MediaRelay()
 
 # transformTrack = None
 
-detector = Detector(use_cuda=False)
+detector = Detector(use_cuda=True)
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
-    global_queue = ContextVar("global_queue")
 
     def __init__(self, track, transform):
         super().__init__()
@@ -52,15 +48,11 @@ class VideoTransformTrack(MediaStreamTrack):
         self.new_time_receive = 0
         self.prev_time_transform = 0
         self.new_time_transform = 0
-        self.frame_queue = asyncio.Queue()
 
-    async def run(self):
-        th = threading.Thread(target=self.__run_receive)
-        th.start()
-        # loop = asyncio.get_running_loop()
-        # loop.run_until_complete(self.__run_receive())
-        # loop.run_until_complete(self.__run_receive(loop))
-        # asyncio.run(self.__run_receive())
+        self.frame_queue = asyncio.Queue(maxsize=30)
+
+    def run(self):
+        asyncio.get_event_loop().create_task(self.__run_receive())
 
     async def __run_receive(self):
         while True:
@@ -78,11 +70,6 @@ class VideoTransformTrack(MediaStreamTrack):
             self.frame_queue.put_nowait(frame)
 
     async def recv(self):
-        # await self.run()
-        # try:
-        # except LookupError:
-        #     frame_queue = asyncio.Queue(maxsize=30)
-        #     global_queue.set(frame_queue)
 
         frame = await self.frame_queue.get()
 
@@ -124,8 +111,7 @@ async def consume(request):
     log_info("Created for %s", request.remote)
 
     # prepare local media
-    # player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
-    video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
+    # video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
     else:
@@ -163,8 +149,7 @@ async def consume(request):
             #     transformTrack = VideoTransformTrack(
             #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
             #     )
-
-            pc.addTrack(transformedTracks[0])
+            pc.addTrack(transformedTracks[len(transformedTracks) - 1])
 
             # track = ListenerTrack()
             # consumerTracks.add(track)
@@ -212,16 +197,8 @@ async def provide(request):
         transformTrack = VideoTransformTrack(
             relay.subscribe(track), transform="dontknow"
         )
-        await transformTrack.run()
+        transformTrack.run()
         transformedTracks.append(transformTrack)
-        # tm = TrackMux(track)
-        # providerTrackMucks.append(tm)
-        # for ct in consumerTracks:
-        #     print('Added track to listener: ', track, ct)
-        #
-        # frame_queue = asyncio.Queue(maxsize=30)
-        # global_queue.set(frame_queue)
-        # tm.addListener(global_queue.get())
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()

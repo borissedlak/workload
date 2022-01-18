@@ -12,7 +12,7 @@ from aiortc.contrib.media import MediaPlayer
 ROOT = os.path.dirname(__file__)
 
 
-async def negotiate(request):
+async def connect(request):
     pc = RTCPeerConnection()
     pc.addTransceiver('video', direction='sendonly')
 
@@ -28,13 +28,25 @@ async def negotiate(request):
             "video=USB-Videogerät", format="dshow", options=options
         )
 
+    @pc.on('signalingstatechange')
+    async def signalingstatechange():
+        print("signalingState: " + pc.signalingState)
+
+    @pc.on('connectionstatechange')
+    async def connectionstatechange():
+        print("connectionState: " + pc.connectionState)
+
+    @pc.on('iceconnectionstatechange')
+    async def iceconnectionstatechange():
+        print("iceConnectionState: " + pc.iceConnectionState)
+
     pc.addTrack(mediaSource.video)
 
     data = json.dumps({
         "sdp": pc.localDescription.sdp,
         "type": pc.localDescription.type})
 
-    response = requests.post("http://localhost:4000/client", data=data).json()
+    response = requests.post("http://192.168.0.80:4000/provide", data=data).json()
     answer = RTCSessionDescription(sdp=response["sdp"], type=response["type"])
 
     await pc.setRemoteDescription(answer)
@@ -71,7 +83,7 @@ if __name__ == "__main__":
         ssl_context = None
     app = web.Application()
 
-    app.router.add_get("/connect", negotiate)
+    app.router.add_get("/start", connect)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

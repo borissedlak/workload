@@ -4,6 +4,7 @@
 # and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
 
 # used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
+# commented in rtcrtpreceiver.py
 
 import argparse
 import asyncio
@@ -11,19 +12,15 @@ import json
 import logging
 import os
 import ssl
-import threading
-import time
 import uuid
-from contextvars import ContextVar
 
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
-from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
+from aiortc.contrib.media import MediaBlackhole, MediaRecorder, MediaRelay
 from av import VideoFrame
 
-
 from Detector import *
-from sfu_example.server import TrackMux
+from util import FPS_
 
 ROOT = os.path.dirname(__file__)
 
@@ -35,61 +32,38 @@ consumers = set()
 consumerTracks = set()
 relay = MediaRelay()
 
-# transformTrack = None
-
 detector = Detector(use_cuda=False)
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
-    global_queue = ContextVar("global_queue")
 
     def __init__(self, track, transform):
         super().__init__()
         self.track = track
         self.transform = transform
-        self.prev_time_receive = 0
-        self.new_time_receive = 0
-        self.prev_time_transform = 0
-        self.new_time_transform = 0
-        self.frame_queue = asyncio.Queue()
+        self.receive_fps = FPS_("Queue Receive FPS: ", calculate_avg=30)
+        self.transform_fps = FPS_("Transformation FPS: ", calculate_avg=30)
 
-    async def run(self):
-        th = threading.Thread(target=self.__run_receive)
-        th.start()
-        # loop = asyncio.get_running_loop()
-        # loop.run_until_complete(self.__run_receive())
-        # loop.run_until_complete(self.__run_receive(loop))
-        # asyncio.run(self.__run_receive())
+        self.frame_queue = asyncio.Queue(maxsize=30)
+
+    def run(self):
+        # Runs the receiving loop in the background
+        asyncio.get_event_loop().create_task(self.__run_receive())
 
     async def __run_receive(self):
         while True:
             frame = await self.track.recv()
-            self.new_time_receive = time.time()
-            dif = self.new_time_receive - self.prev_time_receive
-
-            if dif != 0:
-                fps = 1 / dif
-                self.prev_time_receive = self.new_time_receive
-                print("Queue Receive FPS: " + str(fps))
+            self.receive_fps.update_and_print()
 
             if self.frame_queue.full():
                 self.frame_queue.get_nowait()
             self.frame_queue.put_nowait(frame)
 
     async def recv(self):
-        # await self.run()
-        # try:
-        # except LookupError:
-        #     frame_queue = asyncio.Queue(maxsize=30)
-        #     global_queue.set(frame_queue)
 
         frame = await self.frame_queue.get()
-
-        self.new_time_transform = time.time()
-        fps = 1 / (self.new_time_transform - self.prev_time_transform)
-        self.prev_time_transform = self.new_time_transform
-        print("Transformation FPS: " + str(fps))
+        self.transform_fps.update_and_print()
 
         img = frame.to_ndarray(format="bgr24")
         detector.processImage(img=img)
@@ -124,8 +98,7 @@ async def consume(request):
     log_info("Created for %s", request.remote)
 
     # prepare local media
-    # player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
-    video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
+    # video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
     else:
@@ -147,7 +120,6 @@ async def consume(request):
 
     @pc.on("track")
     def on_track(track):
-        # global transformTrack
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
@@ -163,8 +135,7 @@ async def consume(request):
             #     transformTrack = VideoTransformTrack(
             #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
             #     )
-
-            pc.addTrack(transformedTracks[0])
+            pc.addTrack(transformedTracks[len(transformedTracks) - 1])
 
             # track = ListenerTrack()
             # consumerTracks.add(track)
@@ -209,19 +180,13 @@ async def provide(request):
     async def on_track(track):
         providerTracks.append(track)
 
+        # check for type of incoming stream
         transformTrack = VideoTransformTrack(
-            relay.subscribe(track), transform="dontknow"
+            track  # relay.subscribe(track)
+            , transform="dontknow"
         )
-        await transformTrack.run()
+        transformTrack.run()
         transformedTracks.append(transformTrack)
-        # tm = TrackMux(track)
-        # providerTrackMucks.append(tm)
-        # for ct in consumerTracks:
-        #     print('Added track to listener: ', track, ct)
-        #
-        # frame_queue = asyncio.Queue(maxsize=30)
-        # global_queue.set(frame_queue)
-        # tm.addListener(global_queue.get())
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
@@ -245,17 +210,11 @@ async def on_shutdown(app):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="WebRTC audio / video / data-channels demo"
-    )
+    parser = argparse.ArgumentParser(description="WebRTC audio / video / data-channels demo")
     parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
-    parser.add_argument(
-        "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=4000, help="Port for HTTP server (default: 4000)"
-    )
+    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=4000, help="Port for HTTP server (default: 4000)")
     parser.add_argument("--record-to", help="Write received media to a file."),
     parser.add_argument("--verbose", "-v", action="count")
     args = parser.parse_args()
@@ -275,7 +234,7 @@ if __name__ == "__main__":
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_get("/client.js", javascript)
-    app.router.add_post('/client', provide)
+    app.router.add_post('/provide', provide)
     app.router.add_post("/consume", consume)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

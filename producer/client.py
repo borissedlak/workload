@@ -26,7 +26,7 @@ class Client:
         await self.pc.setLocalDescription(offer)
 
         # TODO: should I maybe only add the track once the connection stands?
-        # TODO: Otherwise I always get 2s of video at start
+        #  Otherwise I always get 2s of video at start
         if args.media_source:
             options = {"framerate": "30", "video_size": "640x480"}
             mediaSource = MediaPlayer(args.media_source, options=options)

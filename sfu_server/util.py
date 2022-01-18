@@ -5,8 +5,9 @@ import numpy as np
 
 
 class FPS_:
-    def __init__(self, output_string, calculate_avg=1):
+    def __init__(self, output_string, calculate_avg=1, display_total=True):
         self.output_string = output_string
+        self.display_total = display_total
         self.prev_time = 0
         self.new_time = 0
 
@@ -21,7 +22,10 @@ class FPS_:
         if dif != 0:
             self.store.put(1 / dif)
             self.prev_time = self.new_time
-            sys.stdout.write("\r" + self.output_string + "%d" % self.store.get_average())
+            msg = "\r" + self.output_string + "%d" % self.store.get_average()
+            if self.display_total:
+                msg += ", last total %.3fs" % dif
+            sys.stdout.write(msg)
             sys.stdout.flush()
             # print(self.output_string + str(self.store.get_average()))
 

@@ -16,7 +16,7 @@ import uuid
 
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
-from aiortc.contrib.media import MediaBlackhole, MediaRecorder, MediaRelay
+from aiortc.contrib.media import MediaRelay
 from av import VideoFrame
 
 from Detector import *
@@ -71,6 +71,7 @@ class VideoTransformTrack(MediaStreamTrack):
                 self.task.cancel()
                 print('\nTrack timed out after {}s without any frame incoming'.format(self.provision_timeout))
 
+
     async def recv(self):
 
         frame = await self.frame_queue.get()
@@ -108,13 +109,6 @@ async def consume(request):
 
     log_info("Created for %s", request.remote)
 
-    # prepare local media
-    # video_player = MediaPlayer(os.path.join(ROOT, "demo/lukas-detection.mp4"))
-    if args.record_to:
-        recorder = MediaRecorder(args.record_to)
-    else:
-        recorder = MediaBlackhole()
-
     @pc.on("datachannel")
     def on_datachannel(channel):
         @channel.on("message")
@@ -134,11 +128,14 @@ async def consume(request):
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
+            print("How come audio is here?")
             # pc.addTrack(player.audio)
-            recorder.addTrack(track)
             # pc.addTrack(video_player.audio)
 
         elif track.kind == "video":
+
+            pc.addTrack(transformedTracks[len(transformedTracks) - 1])
+
             # if transformTrack is None:
             #     # transformTrack = VideoTransformTrack(
             #     #     relay.subscribe(video_player.video), transform=params["video_transform"]
@@ -146,7 +143,6 @@ async def consume(request):
             #     transformTrack = VideoTransformTrack(
             #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
             #     )
-            pc.addTrack(transformedTracks[len(transformedTracks) - 1])
 
             # track = ListenerTrack()
             # consumerTracks.add(track)
@@ -155,17 +151,12 @@ async def consume(request):
 
             # pc.addTrack(providerTracks[0])
 
-            # if args.record_to:
-            #     recorder.addTrack(relay.subscribe(track))
-
         @track.on("ended")
         async def on_ended():
             log_info("Track %s ended", track.kind)
-            await recorder.stop()
 
     # handle offer
     await pc.setRemoteDescription(offer)
-    await recorder.start()
 
     # send answer
     answer = await pc.createAnswer()
@@ -226,7 +217,6 @@ if __name__ == "__main__":
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
     parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=4000, help="Port for HTTP server (default: 4000)")
-    parser.add_argument("--record-to", help="Write received media to a file."),
     parser.add_argument("--verbose", "-v", action="count")
     args = parser.parse_args()
 

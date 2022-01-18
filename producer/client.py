@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -88,6 +89,7 @@ if __name__ == "__main__":
         "--port", type=int, default=8081, help="Port for HTTP server (default: 8081)"
     )
     parser.add_argument("--record-to", help="Write received media to a file."),
+    parser.add_argument("--auto-start", help="Should the server start on load?", default=True),
     parser.add_argument("--verbose", "-v", action="count")
     parser.add_argument("--media-source", help="Path of video or leave empty for webcam")
     args = parser.parse_args()
@@ -103,6 +105,9 @@ if __name__ == "__main__":
     else:
         ssl_context = None
     app = web.Application()
+
+    # if args.auto_start:
+    #     asyncio.run(client.connect(None))
 
     app.router.add_get("/start", client.connect)
     app.router.add_get("/stop", client.stop)

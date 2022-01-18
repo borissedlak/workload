@@ -58,7 +58,7 @@ class Client:
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()
-            print("Error: Could not provide to remote server ...")
+            print("Error: Could not connect to remote server ...")
             return web.Response(status=504, content_type="text/plain", text="Connection request timed out")
         answer = RTCSessionDescription(sdp=response["sdp"], type=response["type"])
 

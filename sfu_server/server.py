@@ -69,7 +69,7 @@ class VideoTransformTrack(MediaStreamTrack):
             except asyncio.TimeoutError:
                 # TODO: Close the pc from this side as well
                 self.task.cancel()
-                print('\nConnection timed out after {}s'.format(self.provision_timeout))
+                print('\nTrack timed out after {}s without any frame incoming'.format(self.provision_timeout))
 
     async def recv(self):
 

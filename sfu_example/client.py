@@ -8,53 +8,74 @@ import requests
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer
+from requests import ConnectTimeout
 
 ROOT = os.path.dirname(__file__)
 
 
-async def connect(request):
-    pc = RTCPeerConnection()
-    pc.addTransceiver('video', direction='sendonly')
+class Client:
+    def __init__(self):
+        self.pc = None
 
-    offer = await pc.createOffer()
-    await pc.setLocalDescription(offer)
+    async def connect(self, request):
+        self.pc = RTCPeerConnection()
+        self.pc.addTransceiver('video', direction='sendonly')
 
-    if args.media_source:
-        options = {"framerate": "30", "video_size": "640x480"}
-        mediaSource = MediaPlayer(args.media_source, options=options)
-    else:
-        options = {"framerate": "30", "video_size": "640x480"}
-        mediaSource = MediaPlayer(
-            "video=USB-Videogerät", format="dshow", options=options
-        )
+        offer = await self.pc.createOffer()
+        await self.pc.setLocalDescription(offer)
 
-    @pc.on('signalingstatechange')
-    async def signalingstatechange():
-        print("signalingState: " + pc.signalingState)
+        # TODO: should I maybe only add the track once the connection stands?
+        # TODO: Otherwise I always get 2s of video at start
+        if args.media_source:
+            options = {"framerate": "30", "video_size": "640x480"}
+            mediaSource = MediaPlayer(args.media_source, options=options)
+        else:
+            options = {"framerate": "30", "video_size": "640x480"}
+            mediaSource = MediaPlayer(
+                "video=USB-Videogerät", format="dshow", options=options
+            )
 
-    @pc.on('connectionstatechange')
-    async def connectionstatechange():
-        print("connectionState: " + pc.connectionState)
+        @self.pc.on('signalingstatechange')
+        async def signalingstatechange():
+            print("signalingState: " + self.pc.signalingState)
 
-    @pc.on('iceconnectionstatechange')
-    async def iceconnectionstatechange():
-        print("iceConnectionState: " + pc.iceConnectionState)
+        @self.pc.on('connectionstatechange')
+        async def connectionstatechange():
+            print("connectionState: " + self.pc.connectionState)
 
-    pc.addTrack(mediaSource.video)
+        @self.pc.on('iceconnectionstatechange')
+        async def iceconnectionstatechange():
+            print("iceConnectionState: " + self.pc.iceConnectionState)
 
-    data = json.dumps({
-        "sdp": pc.localDescription.sdp,
-        "type": pc.localDescription.type})
+        self.pc.addTrack(mediaSource.video)
 
-    response = requests.post("http://192.168.0.80:4000/provide", data=data).json()
-    answer = RTCSessionDescription(sdp=response["sdp"], type=response["type"])
+        data = json.dumps({
+            "sdp": self.pc.localDescription.sdp,
+            "type": self.pc.localDescription.type})
 
-    await pc.setRemoteDescription(answer)
+        try:
+            response = requests.post("http://192.168.0.80:4000/provide", timeout=2.5, data=data).json()
+        except ConnectTimeout:
+            mediaSource.video.stop()
+            await self.pc.close()
+            print("Error: Could not provide to remote server ...")
+            return web.Response(status=504, content_type="text/plain", text="Connection request timed out")
+        answer = RTCSessionDescription(sdp=response["sdp"], type=response["type"])
 
-    return web.Response(content_type="text/plain", text="Connected")
+        await self.pc.setRemoteDescription(answer)
+
+        return web.Response(content_type="text/plain", text="Started")
+
+    async def stop(self, request):
+        if self.pc is not None and self.pc.connectionState == "connected":
+            await self.pc.close()
+            return web.Response(content_type="text/plain", text="Connection closed")
+        else:
+            return web.Response(status=503, content_type="text/plain", text="Was not even connected...")
 
 
 if __name__ == "__main__":
+    client = Client()
     parser = argparse.ArgumentParser(
         description="WebRTC audio / video / data-channels demo"
     )
@@ -83,7 +104,8 @@ if __name__ == "__main__":
         ssl_context = None
     app = web.Application()
 
-    app.router.add_get("/start", connect)
+    app.router.add_get("/start", client.connect)
+    app.router.add_get("/stop", client.stop)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

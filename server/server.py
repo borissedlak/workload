@@ -32,33 +32,44 @@ consumers = set()
 consumerTracks = set()
 relay = MediaRelay()
 
-detector = Detector(use_cuda=False)
+detector = Detector(use_cuda=True)
 
 
+# TODO: If the track does not receive anymore frames from the remote peer, remove it and stop it
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
 
-    def __init__(self, track, transform):
+    def __init__(self, track, transform, provision_timeout=3.0):
         super().__init__()
         self.track = track
         self.transform = transform
         self.receive_fps = FPS_("Queue Receive FPS: ", calculate_avg=30)
         self.transform_fps = FPS_("Transformation FPS: ", calculate_avg=30)
+        self.provision_timeout = provision_timeout
 
         self.frame_queue = asyncio.Queue(maxsize=30)
+        self.task = None
 
     def run(self):
         # Runs the receiving loop in the background
-        asyncio.get_event_loop().create_task(self.__run_receive())
+        self.task = asyncio.get_event_loop().create_task(self.__run_receive())
+
+    async def update_frame(self):
+        frame = await self.track.recv()
+        self.receive_fps.update_and_print()
+
+        if self.frame_queue.full():
+            self.frame_queue.get_nowait()
+        self.frame_queue.put_nowait(frame)
 
     async def __run_receive(self):
         while True:
-            frame = await self.track.recv()
-            self.receive_fps.update_and_print()
-
-            if self.frame_queue.full():
-                self.frame_queue.get_nowait()
-            self.frame_queue.put_nowait(frame)
+            try:
+                await asyncio.wait_for(self.update_frame(), timeout=self.provision_timeout)
+            except asyncio.TimeoutError:
+                # TODO: Close the pc from this side as well
+                self.task.cancel()
+                print('\nConnection timed out after {}s'.format(self.provision_timeout))
 
     async def recv(self):
 

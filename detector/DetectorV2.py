@@ -4,6 +4,7 @@ import sys
 from os.path import join, dirname
 
 import cv2
+import imutils
 import numpy as np
 import onnxruntime as ort
 
@@ -19,8 +20,8 @@ face_detector_onnx = join(dirname(__file__), "version-RFB-640.onnx")
 # other than the default CPU provider (as opposed to the previous behavior of providers getting set/registered by default
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
-# ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
+face_detector = ort.InferenceSession(face_detector_onnx)
+# face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
 
 # scale current rectangle to box
@@ -64,10 +65,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--image", type=str, required=False, help="input image")
 args = parser.parse_args()
 
-img_path = args.image if args.image else "../producer/demo_files/marathon.jpg"
+img_path = args.image if args.image else "../producer/demo_files/uaf.jpg"
 color = (255, 128, 0)
 
 orig_image = cv2.imread(img_path)
+orig_image = imutils.resize(orig_image, width=700)
 boxes, labels, probs = faceDetector(orig_image)
 
 for i in range(boxes.shape[0]):

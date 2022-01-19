@@ -36,6 +36,7 @@ class Client:
                 "video=USB-Videogerät", format="dshow", options=options
             )
 
+        #TODO: Maybe try reconnect if state lost?
         @self.pc.on('signalingstatechange')
         async def signalingstatechange():
             print("signalingState: " + self.pc.signalingState)

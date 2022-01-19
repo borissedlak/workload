@@ -8,6 +8,8 @@ import numpy as np
 from cv2 import dnn
 from imutils.video import FPS
 
+from age.levi_googlenet import process_frame_v2
+
 protoPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.prototxt")
 modelPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.caffemodel")
 
@@ -52,7 +54,7 @@ class Detector:
         fps = FPS().start()
 
         while success:
-            self.processFrame()
+            process_frame_v2(self.img)
             # cv2.imshow("outpt", self.img)
 
             key = cv2.waitKey(1) & 0xFF

@@ -14,7 +14,7 @@ from box_utils import predict
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face detection using UltraFace-640 onnx model
 face_detector_onnx = join(dirname(__file__), "version-RFB-640.onnx")
-# plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
+plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
 
 # Start from ORT 1.10, ORT requires explicitly setting the providers parameter if you want to use execution providers
 # other than the default CPU provider (as opposed to the previous behavior of providers getting set/registered by default
@@ -45,6 +45,7 @@ def cropImage(image, box):
 # face detection method
 def faceDetector(orig_image, threshold=0.7):
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
+    # image = cv2.resize(image, (300, 300))
     image = cv2.resize(image, (640, 480))
     image_mean = np.array([127, 127, 127])
     image = (image - image_mean) / 128
@@ -128,16 +129,16 @@ def process_frame_v2(orig_image):
 
     for i in range(boxes.shape[0]):
         box = scale(boxes[i, :])
-        # cropped = cropImage(orig_image, box)
-        # gender = genderClassifier(cropped)
-        # age = ageClassifier(cropped)
-        gender = "???"
-        age = "???"
+        cropped = cropImage(orig_image, box)
+        gender = genderClassifier(cropped)
+        age = ageClassifier(cropped)
+        # gender = "???"
+        # age = "???"
         print(f'Box {i} --> {gender}, {age}')
 
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
-        # cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
-        #             cv2.LINE_AA)
+        cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
+                    cv2.LINE_AA)
         cv2.imshow('', orig_image)
 
     # cv2.waitKey(0)

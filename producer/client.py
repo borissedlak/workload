@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import json
 import logging
 import os
@@ -18,7 +17,14 @@ class Client:
     def __init__(self):
         self.pc = None
 
-    async def connect(self, request):
+    async def createOffer(self, transceiverType):
+        self.pc = RTCPeerConnection()
+        self.pc.addTransceiver(transceiverType, direction='sendonly')
+
+        offer = await self.pc.createOffer()
+        await self.pc.setLocalDescription(offer)
+
+    async def connectVideo(self, request):
         self.pc = RTCPeerConnection()
         self.pc.addTransceiver('video', direction='sendonly')
 
@@ -36,7 +42,7 @@ class Client:
                 "video=USB-Videogerät", format="dshow", options=options
             )
 
-        #TODO: Maybe try reconnect if state lost?
+        # TODO: Maybe try reconnect if state lost?
         @self.pc.on('signalingstatechange')
         async def signalingstatechange():
             print("signalingState: " + self.pc.signalingState)
@@ -66,6 +72,33 @@ class Client:
 
         await self.pc.setRemoteDescription(answer)
 
+        return web.Response(content_type="text/plain", text="Started")
+
+    async def connectAudio(self, request):
+
+        await self.createOffer("audio")
+
+        options = {"ch": "1", "bits": "16", "rate": "32000"}
+        mediaSource = MediaPlayer(
+            "audio=Mikrofonarray (Realtek(R) Audio)", format="dshow", options=options
+        )
+
+        self.pc.addTrack(mediaSource.audio)
+
+        data = json.dumps({
+            "sdp": self.pc.localDescription.sdp,
+            "type": self.pc.localDescription.type})
+
+        try:
+            response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
+        except ConnectTimeout:
+            # mediaSource.video.stop()
+            await self.pc.close()
+            print("Error: Could not connect to remote server ...")
+            return web.Response(status=504, content_type="text/plain", text="Connection request timed out")
+        answer = RTCSessionDescription(sdp=response["sdp"], type=response["type"])
+
+        await self.pc.setRemoteDescription(answer)
         return web.Response(content_type="text/plain", text="Started")
 
     async def stop(self, request):
@@ -110,7 +143,8 @@ if __name__ == "__main__":
     # if args.auto_start:
     #     asyncio.run(client.connect(None))
 
-    app.router.add_get("/start", client.connect)
+    app.router.add_get("/startVideo", client.connectVideo)
+    app.router.add_get("/startAudio", client.connectAudio)
     app.router.add_get("/stop", client.stop)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

@@ -37,10 +37,11 @@ class Detector:
 
         (self.height, self.width) = self.img.shape[:2]
 
-        self.processFrame()
+        # self.processFrame()
+        process_frame_v2(self.img)
 
-        # cv2.imshow("outpt", self.img)
-        # cv2.waitKey(0)
+        cv2.imshow("outpt", self.img)
+        cv2.waitKey(0)
 
     def processVideo(self, videoName):
         cap = cv2.VideoCapture(videoName)

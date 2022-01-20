@@ -27,7 +27,8 @@ class Age_Trigger(Trigger_Function):
     ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 
     def check(self, frame, probability, label, box=None):
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = frame if box is None else cropFrameToBoxArea(frame, box)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.resize(image, (224, 224))
         image_mean = np.array([104, 117, 123])
         image = image - image_mean
@@ -38,8 +39,12 @@ class Age_Trigger(Trigger_Function):
         input_name = self.age_classifier.get_inputs()[0].name
         ages = self.age_classifier.run(None, {input_name: image})
         age = self.ageList[ages[0].argmax()]
-        return age
+        return frame, age
 
+
+# crop image
+def cropFrameToBoxArea(frame, box):
+    return frame[box[1]:box[3], box[0]:box[2]]
 
 class FPS_:
     def __init__(self, output_string, calculate_avg=1, display_total=True):

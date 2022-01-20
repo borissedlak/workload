@@ -8,8 +8,12 @@ import imutils
 import numpy as np
 import onnxruntime as ort
 
+from util import cropFrameToBoxArea, Age_Trigger
+
 sys.path.append('..')
 from box_utils import predict
+
+ag = Age_Trigger
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face detection using UltraFace-640 onnx model
@@ -21,7 +25,7 @@ plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
 # ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-face_detector = ort.InferenceSession(face_detector_onnx, providers=['CPUExecutionProvider'])
+face_detector = ort.InferenceSession(face_detector_onnx)
 
 
 # scale current rectangle to box
@@ -36,10 +40,6 @@ def scale(box):
     return bboxes
 
 
-# crop image
-def cropImage(image, box):
-    num = image[box[1]:box[3], box[0]:box[2]]
-    return num
 
 
 # face detection method
@@ -129,11 +129,11 @@ def process_frame_v2(orig_image):
 
     for i in range(boxes.shape[0]):
         box = scale(boxes[i, :])
-        cropped = cropImage(orig_image, box)
-        gender = genderClassifier(cropped)
-        # age = ageClassifier(cropped)
-        # gender = "???"
-        age = "???"
+        # cropped = cropFrameToBoxArea(orig_image, box)
+        # gender = genderClassifier(cropped)
+        age = ag.check(orig_image, 0.7, 'Old', box)
+        gender = "???"
+        # age = "???"
         print(f'Box {i} --> {gender}, {age}')
 
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)

@@ -21,7 +21,7 @@ plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
 # ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-face_detector = ort.InferenceSession(face_detector_onnx)
+face_detector = ort.InferenceSession(face_detector_onnx, providers=['CPUExecutionProvider'])
 
 
 # scale current rectangle to box
@@ -131,9 +131,9 @@ def process_frame_v2(orig_image):
         box = scale(boxes[i, :])
         cropped = cropImage(orig_image, box)
         gender = genderClassifier(cropped)
-        age = ageClassifier(cropped)
+        # age = ageClassifier(cropped)
         # gender = "???"
-        # age = "???"
+        age = "???"
         print(f'Box {i} --> {gender}, {age}')
 
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)

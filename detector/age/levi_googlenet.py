@@ -8,16 +8,18 @@ import imutils
 import numpy as np
 import onnxruntime as ort
 
+import Detector
+from Transformations import anonymize_face_pixelate
 from util import cropFrameToBoxArea, Age_Trigger
 
 sys.path.append('..')
 from box_utils import predict
 
-ag = Age_Trigger
+ag = Age_Trigger()
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face detection using UltraFace-640 onnx model
-face_detector_onnx = join(dirname(__file__), "version-RFB-640.onnx")
+face_detector_onnx = join(dirname(__file__), "version-RFB-320.onnx")
 plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
 
 # Start from ORT 1.10, ORT requires explicitly setting the providers parameter if you want to use execution providers
@@ -25,7 +27,7 @@ plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
 # ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-face_detector = ort.InferenceSession(face_detector_onnx)
+face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
 
 # scale current rectangle to box
@@ -43,10 +45,10 @@ def scale(box):
 
 
 # face detection method
-def faceDetector(orig_image, threshold=0.7):
+def faceDetector(orig_image, threshold=0.85):
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
     # image = cv2.resize(image, (300, 300))
-    image = cv2.resize(image, (640, 480))
+    image = cv2.resize(image, (320, 240))
     image_mean = np.array([127, 127, 127])
     image = (image - image_mean) / 128
     image = np.transpose(image, [2, 0, 1])
@@ -68,7 +70,7 @@ gender_classifier_onnx = join(dirname(__file__), "gender_googlenet.onnx")
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
 # ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-gender_classifier = ort.InferenceSession(gender_classifier_onnx)
+gender_classifier = ort.InferenceSession(gender_classifier_onnx, providers=['CUDAExecutionProvider'])
 genderList = ['Male', 'Female']
 
 
@@ -97,7 +99,7 @@ age_classifier_onnx = join(dirname(__file__), "age_googlenet.onnx")
 # based on the build flags) when instantiating InferenceSession.
 # For example, if NVIDIA GPU is available and ORT Python package is built with CUDA, then call API as following:
 # ort.InferenceSession(path/to/model, providers=['CUDAExecutionProvider'])
-age_classifier = ort.InferenceSession(age_classifier_onnx)
+age_classifier = ort.InferenceSession(age_classifier_onnx, providers=['CUDAExecutionProvider'])
 ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 
 
@@ -129,17 +131,23 @@ def process_frame_v2(orig_image):
 
     for i in range(boxes.shape[0]):
         box = scale(boxes[i, :])
-        # cropped = cropFrameToBoxArea(orig_image, box)
+        cropped = cropFrameToBoxArea(orig_image, box)
         # gender = genderClassifier(cropped)
-        age = ag.check(orig_image, 0.7, 'Old', box)
+        # TODO: Returns in the new format here
+        # age = ag.check(orig_image, 0.7, '(38-43)', box=box)
+        # age = ageClassifier(cropped)
         gender = "???"
-        # age = "???"
-        print(f'Box {i} --> {gender}, {age}')
+        age = "???"
+        # print(f'Box {i} --> {gender}, {age}')
 
-        cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
-        cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
-                    cv2.LINE_AA)
-        cv2.imshow('', orig_image)
+        face_blurred = anonymize_face_pixelate(cropped, blocks=5)
+        orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
+
+        # cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
+        # cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
+        #             cv2.LINE_AA)
+        # cv2.imshow('', orig_image)
+    return orig_image
 
     # cv2.waitKey(0)
     # sys.exit()

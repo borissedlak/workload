@@ -4,6 +4,7 @@
 # and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
 
 # used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
+# used 11.4.3 cuda version and 8.2.2.26  for cuDNN
 # commented in rtcrtpreceiver.py
 
 import argparse

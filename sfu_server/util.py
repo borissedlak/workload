@@ -23,7 +23,7 @@ class Trigger_Function(metaclass=ABCMeta):
 class Age_Trigger(Trigger_Function):
     age_classifier_onnx = join(dirname(__file__), "age_googlenet.onnx")
 
-    age_classifier = ort.InferenceSession(age_classifier_onnx)
+    age_classifier = ort.InferenceSession(age_classifier_onnx, providers=['CUDAExecutionProvider'])
     ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 
     def check(self, frame, probability, label, box=None):

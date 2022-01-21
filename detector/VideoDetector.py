@@ -96,4 +96,3 @@ class VideoDetector:
                 # face_blurred = self.anonymize_face_simple(face_pixels)
                 face_blurred = anonymize_face_pixelate(face_pixels, blocks=5)
                 self.img[ymin:ymax, xmin:xmax] = face_blurred
-

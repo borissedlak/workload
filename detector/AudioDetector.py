@@ -38,4 +38,3 @@ while True:
     active = vad.is_speech(chunk, SAMPLE_RATE)
 
     print('1' if active else '_')
-

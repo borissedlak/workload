@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def area_of(left_top, right_bottom):
     """
     Compute the areas of rectangles given two corners.
@@ -13,6 +14,7 @@ def area_of(left_top, right_bottom):
     """
     hw = np.clip(right_bottom - left_top, 0.0, None)
     return hw[..., 0] * hw[..., 1]
+
 
 def iou_of(boxes0, boxes1, eps=1e-5):
     """
@@ -31,6 +33,7 @@ def iou_of(boxes0, boxes1, eps=1e-5):
     area0 = area_of(boxes0[..., :2], boxes0[..., 2:])
     area1 = area_of(boxes1[..., :2], boxes1[..., 2:])
     return overlap_area / (area0 + area1 - overlap_area + eps)
+
 
 def hard_nms(box_scores, iou_threshold, top_k=-1, candidate_size=200):
     """
@@ -65,6 +68,7 @@ def hard_nms(box_scores, iou_threshold, top_k=-1, candidate_size=200):
 
     return box_scores[picked, :]
 
+
 def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.5, top_k=-1):
     """
     Select boxes that contain human faces
@@ -82,27 +86,27 @@ def predict(width, height, confidences, boxes, prob_threshold, iou_threshold=0.5
     """
     boxes = boxes[0]
     confidences = confidences[0]
-    #print(boxes)
-    #print(confidences)
+    # print(boxes)
+    # print(confidences)
 
     picked_box_probs = []
     picked_labels = []
     for class_index in range(1, confidences.shape[1]):
-        #print(confidences.shape[1])
+        # print(confidences.shape[1])
         probs = confidences[:, class_index]
-        #print(probs)
+        # print(probs)
         mask = probs > prob_threshold
         probs = probs[mask]
 
         if probs.shape[0] == 0:
             continue
         subset_boxes = boxes[mask, :]
-        #print(subset_boxes)
+        # print(subset_boxes)
         box_probs = np.concatenate([subset_boxes, probs.reshape(-1, 1)], axis=1)
         box_probs = hard_nms(box_probs,
-           iou_threshold=iou_threshold,
-           top_k=top_k,
-           )
+                             iou_threshold=iou_threshold,
+                             top_k=top_k,
+                             )
         picked_box_probs.append(box_probs)
         picked_labels.extend([class_index] * box_probs.shape[0])
     if not picked_box_probs:

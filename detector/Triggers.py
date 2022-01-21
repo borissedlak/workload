@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from abc import ABCMeta, abstractmethod
 from os.path import join, dirname
 from typing import Tuple
 

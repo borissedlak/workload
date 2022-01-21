@@ -41,8 +41,6 @@ def scale(box):
     return bboxes
 
 
-
-
 # face detection method
 def faceDetector(orig_image, threshold=0.85):
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)

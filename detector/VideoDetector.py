@@ -8,7 +8,7 @@ import numpy as np
 from cv2 import dnn
 from imutils.video import FPS
 
-from Transformations import anonymize_face_pixelate
+# from Transformations import anonymize_face_pixelate
 from age.levi_googlenet import process_frame_v2
 
 protoPath = join(dirname(__file__), "models/res10_300x300_ssd_iter_140000.prototxt")
@@ -94,5 +94,5 @@ class VideoDetector:
                 # blur section
                 face_pixels = self.img[ymin:ymax, xmin:xmax]
                 # face_blurred = self.anonymize_face_simple(face_pixels)
-                face_blurred = anonymize_face_pixelate(face_pixels, blocks=5)
-                self.img[ymin:ymax, xmin:xmax] = face_blurred
+                # face_blurred = anonymize_face_pixelate(face_pixels, blocks=5)
+                # self.img[ymin:ymax, xmin:xmax] = face_blurred

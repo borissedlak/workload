@@ -7,14 +7,15 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-from Transformations import anonymize_face_pixelate
+from Transformations import Transformation_Function, Blur_Face_Pixelate
 from Triggers import Age_Trigger
 from util import cropFrameToBoxArea
 
 sys.path.append('..')
 from box_utils import predict
 
-ag = Age_Trigger()
+age_trigger = Age_Trigger()
+blur_pixelate = Blur_Face_Pixelate()
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face detection using UltraFace-640 onnx model
@@ -128,17 +129,16 @@ def process_frame_v2(orig_image):
 
     for i in range(boxes.shape[0]):
         box = scale(boxes[i, :])
-        cropped = cropFrameToBoxArea(orig_image, box)
+        # cropped = cropFrameToBoxArea(orig_image, box)
         # gender = genderClassifier(cropped)
-        # TODO: Returns in the new format here
-        frame, age = ag.check(orig_image, 0.7, '(38-43)', box=box)
+        frame, age = age_trigger.check(orig_image, 0.7, '(38-43)', box=box)
         # age = ageClassifier(cropped)
         gender = "???"
         # age = "???"
         # print(f'Box {i} --> {gender}, {age}')
 
-        face_blurred = anonymize_face_pixelate(cropped, blocks=5)
-        orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
+        orig_image = blur_pixelate.transform(orig_image, options={'box': box, 'blocks': 5})
+        # orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
 
         # cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
         cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,

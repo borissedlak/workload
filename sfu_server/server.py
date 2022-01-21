@@ -4,7 +4,7 @@
 # and https://github.com/aiortc/aiortc/blob/main/examples/server/server.py
 
 # used 10.2 cuda version and 8.3.2.44_cuda10.2 for cuDNN
-# used 11.4.3 cuda version and 8.2.2.26  for cuDNN
+# used 11.4.3 cuda version and 8.2.2.26 for cuDNN
 # commented in rtcrtpreceiver.py
 
 import argparse
@@ -34,12 +34,12 @@ relay = MediaRelay()
 
 
 async def index(request):
-    content = open(os.path.join(ROOT, "index.html"), "r").read()
+    content = open(os.path.join(ROOT, "consumer/index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
 
 
 async def javascript(request):
-    content = open(os.path.join(ROOT, "client.js"), "r").read()
+    content = open(os.path.join(ROOT, "consumer/client.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
 

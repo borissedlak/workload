@@ -25,11 +25,8 @@ class Client:
         await self.pc.setLocalDescription(offer)
 
     async def connectVideo(self, request):
-        self.pc = RTCPeerConnection()
-        self.pc.addTransceiver('video', direction='sendonly')
 
-        offer = await self.pc.createOffer()
-        await self.pc.setLocalDescription(offer)
+        await self.createOffer("video")
 
         # TODO: should I maybe only add the track once the connection stands?
         #  Otherwise I always get 2s of video at start
@@ -62,7 +59,7 @@ class Client:
             "type": self.pc.localDescription.type})
 
         try:
-            response = requests.post("http://192.168.0.80:4000/provide", timeout=2.5, data=data).json()
+            response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()
@@ -92,7 +89,7 @@ class Client:
         try:
             response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
-            # mediaSource.video.stop()
+            mediaSource.video.stop()
             await self.pc.close()
             print("Error: Could not connect to remote server ...")
             return web.Response(status=504, content_type="text/plain", text="Connection request timed out")

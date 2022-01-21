@@ -1,17 +1,16 @@
 # TODO: If the track does not receive anymore frames from the remote peer, remove it and stop it
 import asyncio
 
-import av.frame
-import numpy
 import webrtcvad
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
-from Detector import Detector
+from VideoDetector import VideoDetector
 from util import FPS_
 
-detector = Detector(use_cuda=True)
+detector = VideoDetector(use_cuda=True)
 vad = webrtcvad.Vad(3)
+
 
 class AudioTransformTrack(MediaStreamTrack):
     kind = "video"
@@ -39,7 +38,7 @@ class AudioTransformTrack(MediaStreamTrack):
             self.frame_queue.get_nowait()
         self.frame_queue.put_nowait(frame)
         f = frame.to_ndarray().tobytes()
-        active = vad.is_speech(f[0:2880], 48000) # There could be something wrong here...
+        active = vad.is_speech(f[0:2880], 48000)  # There could be something wrong here...
 
         print('1' if active else '_')
 

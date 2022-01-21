@@ -4,13 +4,12 @@ import sys
 from os.path import join, dirname
 
 import cv2
-import imutils
 import numpy as np
 import onnxruntime as ort
 
-import Detector
 from Transformations import anonymize_face_pixelate
-from util import cropFrameToBoxArea, Age_Trigger
+from Triggers import Age_Trigger
+from util import cropFrameToBoxArea
 
 sys.path.append('..')
 from box_utils import predict
@@ -19,8 +18,8 @@ ag = Age_Trigger()
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face detection using UltraFace-640 onnx model
-face_detector_onnx = join(dirname(__file__), "version-RFB-320.onnx")
-plate_detector_onnx = join(dirname(__file__), "az_plate_ssdmobilenetv1.onnx")
+face_detector_onnx = join(dirname(__file__), "../models/version-RFB-320.onnx")
+plate_detector_onnx = join(dirname(__file__), "../models/az_plate_ssdmobilenetv1.onnx")
 
 # Start from ORT 1.10, ORT requires explicitly setting the providers parameter if you want to use execution providers
 # other than the default CPU provider (as opposed to the previous behavior of providers getting set/registered by default
@@ -63,7 +62,7 @@ def faceDetector(orig_image, threshold=0.85):
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face gender classification using GoogleNet onnx model
-gender_classifier_onnx = join(dirname(__file__), "gender_googlenet.onnx")
+gender_classifier_onnx = join(dirname(__file__), "../models/gender_googlenet.onnx")
 
 # Start from ORT 1.10, ORT requires explicitly setting the providers parameter if you want to use execution providers
 # other than the default CPU provider (as opposed to the previous behavior of providers getting set/registered by default
@@ -92,7 +91,7 @@ def genderClassifier(orig_image):
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Face age classification using GoogleNet onnx model
-age_classifier_onnx = join(dirname(__file__), "age_googlenet.onnx")
+age_classifier_onnx = join(dirname(__file__), "../models/age_googlenet.onnx")
 
 # Start from ORT 1.10, ORT requires explicitly setting the providers parameter if you want to use execution providers
 # other than the default CPU provider (as opposed to the previous behavior of providers getting set/registered by default
@@ -134,18 +133,18 @@ def process_frame_v2(orig_image):
         cropped = cropFrameToBoxArea(orig_image, box)
         # gender = genderClassifier(cropped)
         # TODO: Returns in the new format here
-        # age = ag.check(orig_image, 0.7, '(38-43)', box=box)
+        frame, age = ag.check(orig_image, 0.7, '(38-43)', box=box)
         # age = ageClassifier(cropped)
         gender = "???"
-        age = "???"
+        # age = "???"
         # print(f'Box {i} --> {gender}, {age}')
 
         face_blurred = anonymize_face_pixelate(cropped, blocks=5)
         orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
 
         # cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
-        # cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
-        #             cv2.LINE_AA)
+        cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
+                    cv2.LINE_AA)
         # cv2.imshow('', orig_image)
     return orig_image
 

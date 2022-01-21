@@ -9,13 +9,13 @@ from contextvars import ContextVar
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 
-from Detector import Detector
+from VideoDetector import VideoDetector
 
 clients = set()
 listeners = set()
 listenerTracks = set()
 
-detector = Detector(use_cuda=True, output_width=100)
+detector = VideoDetector(use_cuda=True, output_width=100)
 
 global_queue = ContextVar('global_queue')
 

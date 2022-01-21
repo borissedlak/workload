@@ -4,16 +4,16 @@ import asyncio
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
-from Detector import Detector
+from VideoDetector import VideoDetector
 from util import FPS_
 
-detector = Detector(use_cuda=True)
+detector = VideoDetector(use_cuda=True)
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
 
-    def __init__(self, track, transform, provision_timeout=3.0):
+    def __init__(self, track, transform, provision_timeout=10.0):
         super().__init__()
         self.track = track
         self.transform = transform

@@ -8,13 +8,14 @@ import numpy as np
 import onnxruntime as ort
 
 from Transformations import Transformation_Function, Blur_Face_Pixelate
-from Triggers import Age_Trigger
+from Triggers import Age_Trigger, Face_Trigger
 from util import cropFrameToBoxArea
 
 sys.path.append('..')
 from box_utils import predict
 
 age_trigger = Age_Trigger()
+face_trigger = Face_Trigger()
 blur_pixelate = Blur_Face_Pixelate()
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -125,16 +126,17 @@ def process_frame_v2(orig_image):
 
     # orig_image = cv2.imread(img_path)
     # orig_image = imutils.resize(orig_image, width=700)
+    face_trigger.check(orig_image, 0.7, None)
     boxes, labels, probs = faceDetector(orig_image)
 
     for i in range(boxes.shape[0]):
         box = scale(boxes[i, :])
         # cropped = cropFrameToBoxArea(orig_image, box)
         # gender = genderClassifier(cropped)
-        frame, age = age_trigger.check(orig_image, 0.7, '(38-43)', box=box)
+        # frame, age = age_trigger.check(orig_image, 0.7, '(38-43)', box=box)
         # age = ageClassifier(cropped)
         gender = "???"
-        # age = "???"
+        age = "???"
         # print(f'Box {i} --> {gender}, {age}')
 
         orig_image = blur_pixelate.transform(orig_image, options={'box': box, 'blocks': 5})

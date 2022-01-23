@@ -106,5 +106,6 @@ class VideoDetector:
 
     def processFrame_rec(self):
         self.img, boxes = face_trigger.check(self.img, options={'prob': 0.85})
-        self.img, boxes = age_trigger.check(self.img, options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes})
+        # self.img, boxes = age_trigger.check(self.img,
+        #                                     options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes, 'debug': False})
         self.img = blur_pixelate.transform(self.img, options={'boxes': boxes, 'blocks': 5})

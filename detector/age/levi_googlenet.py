@@ -124,30 +124,24 @@ def process_frame_v2(orig_image):
     # img_path = "../../producer/demo_files/boris.jpg"
     color = (255, 128, 0)
 
-    # orig_image = cv2.imread(img_path)
-    # orig_image = imutils.resize(orig_image, width=700)
-    face_trigger.check(orig_image, 0.7, None)
-    boxes, labels, probs = faceDetector(orig_image)
+    orig_image, boxes = face_trigger.check(orig_image, 0.7, None)
+    # boxes, labels, probs = faceDetector(orig_image)
 
-    for i in range(boxes.shape[0]):
-        box = scale(boxes[i, :])
-        # cropped = cropFrameToBoxArea(orig_image, box)
-        # gender = genderClassifier(cropped)
-        # frame, age = age_trigger.check(orig_image, 0.7, '(38-43)', box=box)
-        # age = ageClassifier(cropped)
-        gender = "???"
-        age = "???"
-        # print(f'Box {i} --> {gender}, {age}')
+    # for i in range(boxes.shape[0]):
+    # box = scale(boxes[i, :]) # TODO: Important??
+    # cropped = cropFrameToBoxArea(orig_image, box)
+    # gender = genderClassifier(cropped)
+    orig_image, age = age_trigger.check(orig_image, 0.7, '(38-43)', box=boxes[0])
+    # age = ageClassifier(cropped)
+    gender = "???"
+    # age = "???"
+    # print(f'Box {i} --> {gender}, {age}')
 
-        orig_image = blur_pixelate.transform(orig_image, options={'box': box, 'blocks': 5})
-        # orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
+    orig_image = blur_pixelate.transform(orig_image, options={'boxes': boxes, 'blocks': 5})
+    # orig_image[box[1]:box[3], box[0]:box[2]] = face_blurred
 
-        # cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
-        cv2.putText(orig_image, f'{gender}, {age}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
-                    cv2.LINE_AA)
-        # cv2.imshow('', orig_image)
+    # cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), color, 4)
+    cv2.putText(orig_image, f'{gender}, {age}', (boxes[0][0], boxes[0][1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.25, color, 2,
+                cv2.LINE_AA)
     return orig_image
-
-    # cv2.waitKey(0)
-    # sys.exit()
 # ------------------------------------------------------------------------------------------------------------------------------------------------

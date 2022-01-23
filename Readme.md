@@ -14,18 +14,18 @@
 
 #### Triggers Lambdas
 - [x] Run multiple ONNX models for image analysis
-- [x] Define common interface for triggers
-  - [ ] Face Recognition
+- [ ] Define common interface for triggers
+  - [x] Face Recognition
   - [ ] Gender Detection
-  - [ ] Age Detection
+  - [x] Age Detection
   - [ ] Car Plate Detection
 
 
 #### Transformations Lambdas
-- [ ] Define common interface for transformations
+- [x] Define common interface for transformations
 - [ ] Implement transformations with interface
   - [ ] blur_simple
-  - [ ] blur_pixelate
+  - [x] blur_pixelate
   - [ ] replace_bar
 
 

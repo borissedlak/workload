@@ -15,14 +15,21 @@ class Transformation_Function(metaclass=ABCMeta):
 
 
 # ##################################################################################################################
-# ########  Transformation methods  ################################################################################
+# ########  Transformation Methods  ################################################################################
 # ##################################################################################################################
 
 class Blur_Face_Pixelate(Transformation_Function):
 
+    # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
-        # TODO: What if empty -->
-        box_area = cropFrameToBoxArea(image, options['box'])
+
+        # Return the image if there is no more boxes to blur
+        if options['boxes'].size == 0:
+            return image
+        else:
+            box = options['boxes'][0]
+
+        box_area = cropFrameToBoxArea(image, box)
         (h, w) = box_area.shape[:2]
         xSteps = np.linspace(0, w, options['blocks'] + 1, dtype="int")
         ySteps = np.linspace(0, h, options['blocks'] + 1, dtype="int")
@@ -43,5 +50,6 @@ class Blur_Face_Pixelate(Transformation_Function):
                 cv2.rectangle(box_area, (startX, startY), (endX, endY),
                               (B, G, R), -1)
         composed = image
-        composed[options['box'][1]:options['box'][3], options['box'][0]:options['box'][2]] = box_area
-        return composed
+        composed[box[1]:box[3], box[0]:box[2]] = box_area
+        # Recursively call again without the current box
+        return self.transform(composed, options={'boxes': options['boxes'][1:], 'blocks': options['blocks']})

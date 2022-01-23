@@ -9,10 +9,15 @@ from cv2 import dnn
 from imutils.video import FPS
 
 # from Transformations import anonymize_face_pixelate
-from age.levi_googlenet import process_frame_v2
+from Transformations import Blur_Face_Pixelate
+from Triggers import Face_Trigger, Age_Trigger
 
 protoPath = join(dirname(__file__), "models/res10_300x300_ssd_iter_140000.prototxt")
 modelPath = join(dirname(__file__), "models/res10_300x300_ssd_iter_140000.caffemodel")
+
+face_trigger = Face_Trigger()
+age_trigger = Age_Trigger()
+blur_pixelate = Blur_Face_Pixelate()
 
 
 class VideoDetector:
@@ -39,13 +44,14 @@ class VideoDetector:
         (self.height, self.width) = self.img.shape[:2]
 
         # self.processFrame()
-        self.img = process_frame_v2(self.img)
+        # self.img = process_frame_v2(self.img)
+        self.processFrame_rec()
 
         if show:
             cv2.imshow("outpt", self.img)
             cv2.waitKey(0)
 
-    def processVideo(self, videoName):
+    def processVideo(self, videoName, show=False):
         cap = cv2.VideoCapture(videoName)
         if not cap.isOpened():
             print("Error opening video ...")
@@ -57,8 +63,9 @@ class VideoDetector:
         fps = FPS().start()
 
         while success:
-            process_frame_v2(self.img)
-            cv2.imshow("outpt", self.img)
+            self.processFrame_rec()
+            if show:
+                cv2.imshow("outpt", self.img)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
@@ -96,3 +103,8 @@ class VideoDetector:
                 # face_blurred = self.anonymize_face_simple(face_pixels)
                 # face_blurred = anonymize_face_pixelate(face_pixels, blocks=5)
                 # self.img[ymin:ymax, xmin:xmax] = face_blurred
+
+    def processFrame_rec(self):
+        self.img, boxes = face_trigger.check(self.img, options={'prob': 0.85})
+        self.img, boxes = age_trigger.check(self.img, options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes})
+        self.img = blur_pixelate.transform(self.img, options={'boxes': boxes, 'blocks': 5})

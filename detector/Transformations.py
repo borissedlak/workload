@@ -1,10 +1,11 @@
 from abc import ABCMeta, abstractmethod
+from datetime import datetime
 
 import cv2
 import numpy as np
 from av.frame import Frame
 
-from util import cropFrameToBoxArea
+from util import cropFrameToBoxArea, printExecutionTime
 
 
 class Transformation_Function(metaclass=ABCMeta):
@@ -19,12 +20,18 @@ class Transformation_Function(metaclass=ABCMeta):
 # ##################################################################################################################
 
 class Blur_Face_Pixelate(Transformation_Function):
+    start_time = None
+    function_name = 'Blur_Face_Pixelate'
 
     # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
+        if 'stats' in options and options['stats']:
+            self.start_time = datetime.now()
 
         # Return the image if there is no more boxes to blur
         if options['boxes'].size == 0:
+            printExecutionTime(self.function_name, datetime.now(), self.start_time)
+            self.start_time = None
             return image
         else:
             box = options['boxes'][0]

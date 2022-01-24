@@ -45,7 +45,7 @@ class VideoDetector:
 
         # self.processFrame()
         # self.img = process_frame_v2(self.img)
-        self.processFrame_rec()
+        self.processFrame_v3(stats=True)
 
         if show:
             cv2.imshow("outpt", self.img)
@@ -63,7 +63,7 @@ class VideoDetector:
         fps = FPS().start()
 
         while success:
-            self.processFrame_rec()
+            self.processFrame_v3(stats=True)
             if show:
                 cv2.imshow("outpt", self.img)
 
@@ -104,8 +104,9 @@ class VideoDetector:
                 # face_blurred = anonymize_face_pixelate(face_pixels, blocks=5)
                 # self.img[ymin:ymax, xmin:xmax] = face_blurred
 
-    def processFrame_rec(self):
-        self.img, boxes = face_trigger.check(self.img, options={'prob': 0.85})
-        # self.img, boxes = age_trigger.check(self.img,
-        #                                     options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes, 'debug': False})
-        self.img = blur_pixelate.transform(self.img, options={'boxes': boxes, 'blocks': 5})
+    def processFrame_v3(self, stats=False):
+        self.img, boxes = face_trigger.check(self.img, options={'prob': 0.85, 'stats': stats})
+        self.img, boxes = age_trigger.check(self.img,
+                                            options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes, 'debug': True,
+                                                     'stats': stats})
+        self.img = blur_pixelate.transform(self.img, options={'boxes': boxes, 'blocks': 5, 'stats': stats})

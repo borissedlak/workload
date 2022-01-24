@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 
 import numpy as np
 
@@ -47,3 +48,12 @@ class Cyclical_Array:
 
     def get_average(self):
         return np.mean(self.data)
+
+
+def diffAsStringInMS(a: datetime, b: datetime):
+    return str(int((a - b).microseconds / 1000))
+
+
+def printExecutionTime(name: str, a: datetime, b: datetime):
+    if a is not None and b is not None:
+        print(f' {name} took {diffAsStringInMS(a, b)}ms')

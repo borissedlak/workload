@@ -32,12 +32,12 @@
 
 
 #### Privacy model support
-- [ ] Define model structure
-- [ ] Compile and parse model
-  - [ ] Compile structure
-  - [ ] Compile transformation names
-  - [ ] Compile trigger names
-- [ ] Execute chain of transformations defined model
+- [x] Define model structure
+- [x] Compile and parse model
+  - [x] Compile structure
+  - [x] Compile transformation names
+  - [x] Compile trigger names
+- [x] Execute chain of transformations defined model
 
 
 ### Only for Thesis

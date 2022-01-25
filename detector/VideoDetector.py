@@ -22,19 +22,21 @@ blur_pixelate = Blur_Face_Pixelate()
 
 
 class VideoDetector:
-    def __init__(self, privacy_model: PrivacyModel = None, use_cuda=False, output_width=None, confidence_threshold=0.5):
+    def __init__(self, privacy_model: PrivacyModel = None, use_cuda=False, output_width=None, confidence_threshold=0.5,
+                 show_stats=False):
         # I can use caffe, tensorflow, or pytorch
         self.faceModel = cv2.dnn.readNetFromCaffe(protoPath, caffeModel=modelPath)
         self.img = None
         self.output_width = output_width
         self.confidence_threshold = confidence_threshold
         self.privacy_model = privacy_model
+        self.show_stats = show_stats
 
         if use_cuda:
             self.faceModel.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
             self.faceModel.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-    def processImage(self, img_path=None, img=None, show=False):
+    def processImage(self, img_path=None, img=None, showResult=False):
         if img_path is not None:
             self.img = cv2.imread(img_path)
         else:
@@ -47,13 +49,13 @@ class VideoDetector:
 
         # self.processFrame()
         # self.img = process_frame_v2(self.img)
-        self.processFrame_v3(stats=True)
+        self.processFrame_v3(stats=self.show_stats)
 
-        if show:
+        if showResult:
             cv2.imshow("outpt", self.img)
             cv2.waitKey(0)
 
-    def processVideo(self, videoName, show=False):
+    def processVideo(self, videoName, showResult=False):
         cap = cv2.VideoCapture(videoName)
         if not cap.isOpened():
             print("Error opening video ...")
@@ -65,8 +67,8 @@ class VideoDetector:
         fps = FPS().start()
 
         while success:
-            self.processFrame_v3(stats=True)
-            if show:
+            self.processFrame_v3(stats=self.show_stats)
+            if showResult:
                 cv2.imshow("outpt", self.img)
 
             key = cv2.waitKey(1) & 0xFF

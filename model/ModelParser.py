@@ -1,14 +1,13 @@
 import ast
 
-from Transformations import Blur_Face_Pixelate
+import Models
+from Transformations import Blur_Face_Pixelate, Max_Spec_Resize
 from Triggers import Face_Trigger, Age_Trigger
 
 source_commands = ['video', 'audio']
 trigger_functions = ['Face_Trigger', 'Age_Trigger']
-transformation_functions = ['Blur_Face_Pixelate']
+transformation_functions = ['Blur_Face_Pixelate', 'Max_Spec_Resize']
 triggers_and_transformations = trigger_functions + transformation_functions
-
-test_string = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Blur_Face_Pixelate:{'blocks':5}"
 
 
 class CmdWithArgs:
@@ -22,7 +21,8 @@ class CmdWithArgs:
         self.commandFunction = {
             'Face_Trigger': Face_Trigger(),
             'Age_Trigger': Age_Trigger(),
-            'Blur_Face_Pixelate': Blur_Face_Pixelate()
+            'Blur_Face_Pixelate': Blur_Face_Pixelate(),
+            'Max_Spec_Resize': Max_Spec_Resize()
         }.get(self.command)
 
     def isMediaSource(self):
@@ -80,4 +80,4 @@ def parseModel(s: str):
 # print(c.commandFunction)
 # c.resolveCommand()
 # print(c.commandFunction)
-parseModel(test_string).printInfo()
+parseModel(Models.faces_pixelate).printInfo()

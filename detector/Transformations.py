@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
 import cv2
+import imutils
 import numpy as np
 from av.frame import Frame
 
@@ -60,3 +61,24 @@ class Blur_Face_Pixelate(Transformation_Function):
         composed[box[1]:box[3], box[0]:box[2]] = box_area
         # Recursively call again without the current box
         return self.transform(composed, options={'boxes': options['boxes'][1:], 'blocks': options['blocks']})
+
+
+class Max_Spec_Resize(Transformation_Function):
+    start_time = None
+    function_name = 'Max_Spec_Resize'
+
+    # Always requires a box as input, even if everything is to blur it must specify the whole area
+    def transform(self, image, options=None) -> Frame:
+        if 'stats' in options and options['stats']:
+            self.start_time = datetime.now()
+
+        resized = image
+        if 'max_width' in options and resized.shape[1] > options['max_width']:
+            resized = imutils.resize(resized, width=options['max_width'])
+        elif 'max_height' in options and resized.shape[0] > options['max_height']:
+            resized = imutils.resize(resized, width=options['max_height'])
+
+        printExecutionTime(self.function_name, datetime.now(), self.start_time)
+        self.start_time = None
+
+        return resized

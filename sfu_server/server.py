@@ -20,6 +20,7 @@ from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRelay
 
 import ModelParser
+import Models
 from AudioTransformTrack import AudioTransformTrack
 from VideoTransformTrack import VideoTransformTrack
 
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
-    activeModel = ModelParser.parseModel(ModelParser.test_string)
+    activeModel = ModelParser.parseModel(Models.faces_pixelate)
     activeModel.printInfo()
 
     app = web.Application()

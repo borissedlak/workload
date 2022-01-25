@@ -4,16 +4,17 @@ import asyncio
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
+from ModelParser import PrivacyChain
 from VideoDetector import VideoDetector
 from util import FPS_
 
-detector = VideoDetector(use_cuda=True)
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
+    detector = VideoDetector(use_cuda=True)
 
-    def __init__(self, track, privacyModel=None, provision_timeout=10.0):
+    def __init__(self, track, privacy_model=None, provision_timeout=10.0):
         super().__init__()
         self.track = track
         self.receive_fps = FPS_("Queue Receive FPS: ", calculate_avg=30)
@@ -22,7 +23,10 @@ class VideoTransformTrack(MediaStreamTrack):
 
         self.frame_queue = asyncio.Queue(maxsize=30)
         self.task = None
-        detector.privacy_model = privacyModel
+        self.detector.privacy_model = privacy_model
+
+    def update_model(self, new_model: PrivacyChain):
+        self.detector.privacy_model = new_model
 
     def run(self):
         # Runs the receiving loop in the background
@@ -51,9 +55,9 @@ class VideoTransformTrack(MediaStreamTrack):
         self.transform_fps.update_and_print()
 
         img = frame.to_ndarray(format="bgr24")
-        detector.processImage(img=img)
+        self.detector.processImage(img=img)
 
-        new_frame = VideoFrame.from_ndarray(detector.img, format="bgr24")
+        new_frame = VideoFrame.from_ndarray(self.detector.img, format="bgr24")
         new_frame.pts = frame.pts
         new_frame.time_base = frame.time_base
         return new_frame

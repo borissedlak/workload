@@ -9,7 +9,7 @@ from cv2 import dnn
 from imutils.video import FPS
 
 # from Transformations import anonymize_face_pixelate
-from ModelParser import PrivacyModel
+from ModelParser import PrivacyChain
 from Transformations import Blur_Face_Pixelate
 from Triggers import Face_Trigger, Age_Trigger
 
@@ -22,7 +22,7 @@ blur_pixelate = Blur_Face_Pixelate()
 
 
 class VideoDetector:
-    def __init__(self, privacy_model: PrivacyModel = None, use_cuda=False, output_width=None, confidence_threshold=0.5,
+    def __init__(self, privacy_model: PrivacyChain = None, use_cuda=False, output_width=None, confidence_threshold=0.5,
                  show_stats=False):
         # I can use caffe, tensorflow, or pytorch
         self.faceModel = cv2.dnn.readNetFromCaffe(protoPath, caffeModel=modelPath)

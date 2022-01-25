@@ -35,7 +35,7 @@ class CmdWithArgs:
         return self.command in transformation_functions
 
 
-class PrivacyModel:
+class PrivacyChain:
 
     def __init__(self, cmA: list[CmdWithArgs]):
         self.mediaSource = cmA[0]
@@ -58,6 +58,28 @@ class PrivacyModel:
         print("\n")
 
 
+class PrivacyModel:
+
+    def __init__(self, chains: list[PrivacyChain]):
+        self.chains = chains
+
+    # If a tag is here, this means that the provider has tagged his stream, and we should try to find a specific model
+    def getChainForSource(self, media_type, tag=None):
+        match_filter = list(filter(lambda c: c.mediaSource.command == media_type, self.chains))
+        if len(match_filter) <= 0:
+            raise ValueError("The incoming stream has an invalid stream type or there is no model present to allow it")
+
+        if tag is not None:
+            filtered_tag = list(
+                filter(lambda c: 'tag' in c.mediaSource.args and c.mediaSource.args['tag'] == tag,
+                       match_filter))
+            if len(filtered_tag) <= 0:
+                print(f"No privacy chain in the model was tagged with {tag}, using untagged chains")
+            else:
+                match_filter = filtered_tag
+        return match_filter[-1]
+
+
 def parseModel(s: str):
     commandsWithArgs = []
     cAs = s.split('-->')
@@ -71,9 +93,12 @@ def parseModel(s: str):
     for idx, val in enumerate(commandsWithArgs[1:]):
         if val.command not in triggers_and_transformations:
             raise ValueError(f"Command '{val.command}' unknown")
-        commandsWithArgs[idx+1].resolveCommand()
+        commandsWithArgs[idx + 1].resolveCommand()
 
-    return PrivacyModel(commandsWithArgs)
+    return PrivacyChain(commandsWithArgs)
 
 
-parseModel(Models.faces_pixelate).printInfo()
+
+chain = parseModel(Models.faces_pixelate)
+model = PrivacyModel([chain])
+print(model.getChainForSource("video", "webcam"))

@@ -19,6 +19,7 @@ from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRelay
 
+import ModelParser
 from AudioTransformTrack import AudioTransformTrack
 from VideoTransformTrack import VideoTransformTrack
 
@@ -32,6 +33,7 @@ consumers = set()
 consumerTracks = set()
 relay = MediaRelay()
 
+activeModel = None
 
 async def index(request):
     content = open(os.path.join(ROOT, "consumer/index.html"), "r").read()
@@ -129,13 +131,11 @@ async def provide(request):
     async def on_track(track):
         providerTracks.append(track)
 
+        # TODO: Only pass model if media source matches
         if track.kind == 'video':
-            transformTrack = VideoTransformTrack(
-                track  # relay.subscribe(track)
-                , transform="dontknow"
-            )
+            transformTrack = VideoTransformTrack(track, privacyModel=activeModel)
         else:
-            transformTrack = AudioTransformTrack(track, transform="dontknow")
+            transformTrack = AudioTransformTrack(track, privacyModel=activeModel)
 
         transformTrack.run()
         transformedTracks.append(transformTrack)
@@ -180,6 +180,9 @@ if __name__ == "__main__":
         ssl_context.load_cert_chain(args.cert_file, args.key_file)
     else:
         ssl_context = None
+
+    activeModel = ModelParser.parseModel(ModelParser.test_string)
+    activeModel.printInfo()
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)

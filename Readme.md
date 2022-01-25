@@ -28,6 +28,7 @@
   - [ ] blur_simple
   - [x] blur_pixelate
   - [ ] replace_bar
+  - [ ] max_resize
 
 
 #### Privacy model support

@@ -1,6 +1,8 @@
+import ModelParser
 from VideoDetector import *
 
-detector = VideoDetector(use_cuda=True, output_width=500, confidence_threshold=0.3)
+privacy_model = ModelParser.parseModel(ModelParser.test_string)
+detector = VideoDetector(use_cuda=True, output_width=700, privacy_model=privacy_model)
 
 detector.processImage("../producer/demo_files/images/bruder.jpg", show=True)
 # detector.processVideo("../producer/demo_files/videos/lukas-detection.mp4", show=True)  # FPS: CPU 10, GPU 32

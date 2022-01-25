@@ -13,16 +13,16 @@ detector = VideoDetector(use_cuda=True)
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
 
-    def __init__(self, track, transform, provision_timeout=10.0):
+    def __init__(self, track, privacyModel=None, provision_timeout=10.0):
         super().__init__()
         self.track = track
-        self.transform = transform
         self.receive_fps = FPS_("Queue Receive FPS: ", calculate_avg=30)
         self.transform_fps = FPS_("Transformation FPS: ", calculate_avg=30)
         self.provision_timeout = provision_timeout
 
         self.frame_queue = asyncio.Queue(maxsize=30)
         self.task = None
+        detector.privacy_model = privacyModel
 
     def run(self):
         # Runs the receiving loop in the background

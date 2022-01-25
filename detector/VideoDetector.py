@@ -36,7 +36,7 @@ class VideoDetector:
             self.faceModel.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
             self.faceModel.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-    def processImage(self, img_path=None, img=None, showResult=False):
+    def processImage(self, img_path=None, img=None, show_result=False):
         if img_path is not None:
             self.img = cv2.imread(img_path)
         else:
@@ -51,11 +51,11 @@ class VideoDetector:
         # self.img = process_frame_v2(self.img)
         self.processFrame_v3(stats=self.show_stats)
 
-        if showResult:
+        if show_result:
             cv2.imshow("outpt", self.img)
             cv2.waitKey(0)
 
-    def processVideo(self, videoName, showResult=False):
+    def processVideo(self, videoName, show_result=False):
         cap = cv2.VideoCapture(videoName)
         if not cap.isOpened():
             print("Error opening video ...")
@@ -68,7 +68,7 @@ class VideoDetector:
 
         while success:
             self.processFrame_v3(stats=self.show_stats)
-            if showResult:
+            if show_result:
                 cv2.imshow("outpt", self.img)
 
             key = cv2.waitKey(1) & 0xFF

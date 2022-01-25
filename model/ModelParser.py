@@ -76,8 +76,4 @@ def parseModel(s: str):
     return PrivacyModel(commandsWithArgs)
 
 
-# c = CmdWithArgs("Blur_Face_Pixelate:{'blocks':5}")
-# print(c.commandFunction)
-# c.resolveCommand()
-# print(c.commandFunction)
 parseModel(Models.faces_pixelate).printInfo()

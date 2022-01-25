@@ -182,7 +182,7 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
-    activeModel = ModelParser.parseModel(Models.faces_pixelate)
+    activeModel = ModelParser.parseModel(Models.faces_pixelate_with_resize)
     activeModel.printInfo()
 
     app = web.Application()

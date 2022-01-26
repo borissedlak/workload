@@ -67,7 +67,7 @@ class PrivacyModel:
     def getChainForSource(self, media_type, tag=None):
         match_filter = list(filter(lambda c: c.mediaSource.command == media_type, self.chains))
         if len(match_filter) <= 0:
-            raise ValueError("The incoming stream has an invalid stream type or there is no model present to allow it")
+            raise ValueError("The incoming stream has an invalid media type or there is no model present to allow it")
 
         if tag is not None:
             filtered_tag = list(
@@ -81,24 +81,30 @@ class PrivacyModel:
 
 
 def parseModel(s: str):
-    commandsWithArgs = []
-    cAs = s.split('-->')
+    chains: list[PrivacyChain] = []
+    chains_raw: list[str] = s.splitlines()
 
-    for cA in cAs:
-        commandsWithArgs.append(CmdWithArgs(cA))
+    for c in chains_raw:
 
-    if not commandsWithArgs[0].isMediaSource():
-        raise ValueError(f"First Command '{commandsWithArgs[0].command}' does not specify a media source")
+        commandsWithArgs = []
+        cAs = c.split('-->')
 
-    for idx, val in enumerate(commandsWithArgs[1:]):
-        if val.command not in triggers_and_transformations:
-            raise ValueError(f"Command '{val.command}' unknown")
-        commandsWithArgs[idx + 1].resolveCommand()
+        for cA in cAs:
+            commandsWithArgs.append(CmdWithArgs(cA))
 
-    return PrivacyChain(commandsWithArgs)
+        if not commandsWithArgs[0].isMediaSource():
+            raise ValueError(f"First Command '{commandsWithArgs[0].command}' does not specify a media source")
+
+        for idx, val in enumerate(commandsWithArgs[1:]):
+            if val.command not in triggers_and_transformations:
+                raise ValueError(f"Command '{val.command}' unknown")
+            commandsWithArgs[idx + 1].resolveCommand()
+
+        chains.append(PrivacyChain(commandsWithArgs))
+
+    return PrivacyModel(chains)
 
 
-
-chain = parseModel(Models.faces_pixelate)
-model = PrivacyModel([chain])
-print(model.getChainForSource("video", "webcam"))
+# model = parseModel(Models.faces_pixelate_with_resize)
+# # model = PrivacyModel([chain])
+# print(model.getChainForSource("video", "webcam"))

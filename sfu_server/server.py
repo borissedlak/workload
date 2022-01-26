@@ -126,6 +126,7 @@ async def consume(request):
 async def provide(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params['sdp'], type='offer')
+    tag = params['tag'] if 'tag' in params else None
 
     pc = RTCPeerConnection()
     providers.add(pc)
@@ -134,13 +135,12 @@ async def provide(request):
     @pc.on('track')
     async def on_track(track: RemoteStreamTrack):
         providerTracks.append(track)
-        params['tag']
 
-        # TODO: Only pass model if media source matches
+        chain = activeModel.getChainForSource(track.kind, tag)
         if track.kind == 'video':
-            transformTrack = VideoTransformTrack(track, privacy_model=activeModel)
+            transformTrack = VideoTransformTrack(track, privacy_chain=chain)
         else:
-            transformTrack = AudioTransformTrack(track, privacy_model=activeModel)
+            transformTrack = AudioTransformTrack(track, privacy_chain=chain)
 
         transformTrack.run()
         transformedTracks.append(transformTrack)
@@ -163,11 +163,11 @@ async def updatePrivacyModel(request: Request):
     model_raw = await request.text()
     model_parsed = ModelParser.parseModel(model_raw)
 
-    model_parsed.printInfo()
-
     activeModel = model_parsed
     for track in transformedTracks:
-        track.update_model(model_parsed)
+        c = activeModel.getChainForSource(track.kind, track.tag)
+        c.printInfo()
+        track.update_model(c)
 
 
 async def on_shutdown(app):
@@ -200,7 +200,8 @@ if __name__ == "__main__":
         ssl_context = None
 
     activeModel = ModelParser.parseModel(args.privacy_model)
-    activeModel.printInfo()
+    for chain in activeModel.chains:
+        chain.printInfo()
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)

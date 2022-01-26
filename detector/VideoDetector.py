@@ -22,14 +22,14 @@ blur_pixelate = Blur_Face_Pixelate()
 
 
 class VideoDetector:
-    def __init__(self, privacy_model: PrivacyChain = None, use_cuda=False, output_width=None, confidence_threshold=0.5,
+    def __init__(self, privacy_chain: PrivacyChain = None, use_cuda=False, output_width=None, confidence_threshold=0.5,
                  show_stats=False):
         # I can use caffe, tensorflow, or pytorch
         self.faceModel = cv2.dnn.readNetFromCaffe(protoPath, caffeModel=modelPath)
         self.img = None
         self.output_width = output_width
         self.confidence_threshold = confidence_threshold
-        self.privacy_model = privacy_model
+        self.privacy_chain = privacy_chain
         self.show_stats = show_stats
 
         if use_cuda:
@@ -110,7 +110,7 @@ class VideoDetector:
     def processFrame_v3(self, stats=False):
         boxes = None
 
-        for cmA in self.privacy_model.cmAs:
+        for cmA in self.privacy_chain.cmAs:
             if cmA.isTrigger():
                 args_with_boxes = cmA.args | {'boxes': boxes} | {'stats': stats}
                 self.img, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)

@@ -129,6 +129,8 @@ class Client:
         self.producer_rtts.clear()
 
         f = open('../evaluation/csv_export/producer_rtt.csv', 'w+')
+
+        f.write('rtt,timestamp\n')
         for rtt in rtts:
             f.write(f'{rtt[0]},{rtt[1]}\n')
 

@@ -8,7 +8,7 @@ from av import VideoFrame
 from VideoDetector import VideoDetector
 from util import FPS_
 
-detector = VideoDetector(use_cuda=True)
+detector = VideoDetector()
 vad = webrtcvad.Vad(3)
 
 

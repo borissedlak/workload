@@ -3,9 +3,10 @@ import time
 from datetime import datetime
 
 import numpy as np
-
-
 # crop image
+from aiortc import RTCStatsReport, RTCRemoteInboundRtpStreamStats
+
+
 def cropFrameToBoxArea(frame, box):
     return frame[box[1]:box[3], box[0]:box[2]]
 
@@ -33,7 +34,6 @@ class FPS_:
                 msg += ", last total %.3fs" % dif
             sys.stdout.write(msg)
             sys.stdout.flush()
-            # print(self.output_string + str(self.store.get_average()))
 
 
 class Cyclical_Array:
@@ -57,3 +57,10 @@ def diffAsStringInMS(a: datetime, b: datetime):
 def printExecutionTime(name: str, a: datetime, b: datetime):
     if a is not None and b is not None:
         print(f' {name} took {diffAsStringInMS(a, b)}ms')
+
+
+def getTupleFromStats(consumer_stats: RTCStatsReport):
+    stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
+    rtt = stat_list[0].roundTripTime
+    timestamp = stat_list[0].timestamp
+    return rtt, timestamp

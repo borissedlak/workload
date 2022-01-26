@@ -17,7 +17,7 @@ import uuid
 
 from aiohttp import web
 from aiohttp.web_request import Request
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCStatsReport, RTCRemoteInboundRtpStreamStats
 from aiortc.contrib.media import MediaRelay
 from aiortc.rtcrtpreceiver import RemoteStreamTrack
 
@@ -29,10 +29,12 @@ from VideoTransformTrack import VideoTransformTrack
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger("pc")
-providers = set()
+providers: set[RTCPeerConnection] = set()
 providerTracks = list()
 transformedTracks = list()
-consumers = set()
+consumer_rtts = list()
+consumer_rtts_timestamps = list()
+consumers: set[RTCPeerConnection] = set()
 consumerTracks = set()
 relay = MediaRelay()
 
@@ -154,6 +156,35 @@ async def updatePrivacyModel(request: Request):
         track.update_model(c)
 
 
+async def calculate_stats(request):
+    global providers, consumers, consumer_rtts
+
+    if len(consumers) == 0 or len(providers) == 0:
+        return
+
+    consumer = next(iter(consumers))
+    consumer_stats: RTCStatsReport = await consumer.getStats()
+
+    stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
+    rtt = stat_list[0].roundTripTime
+    timestamp = stat_list[0].timestamp
+
+    consumer_rtts.append((rtt, timestamp))
+
+
+async def persist_stats(request):
+    global consumer_rtts
+
+    rtts = consumer_rtts.copy()
+    consumer_rtts.clear()
+
+    f = open('csv_export/rtt.csv', 'w+')
+    for rtt in rtts:
+        f.write(f'{rtt[0]},{rtt[1]}\n')
+
+    f.close()
+
+
 async def on_shutdown(app):
     # close peer connections
     coros = [pc.close() for pc in providers] + [pc.close() for pc in consumers]
@@ -187,12 +218,20 @@ if __name__ == "__main__":
     for chain in activeModel.chains:
         chain.printInfo()
 
+    # loop = asyncio.get_event_loop()
+    # task = loop.create_task(calculate_stats(None))
+    # loop.run_until_complete(task)
+    #
+    # asyncio.get_event_loop().create_task(calculate_stats(None))
+
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_get("/client.js", javascript)
     app.router.add_post('/provide', provide)
     app.router.add_post("/consume", consume)
+    app.router.add_get("/calculate_stats", calculate_stats)
+    app.router.add_post("/persist_stats", persist_stats)
     app.router.add_post("/privacyModel", updatePrivacyModel)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

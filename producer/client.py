@@ -6,9 +6,11 @@ import ssl
 
 import requests
 from aiohttp import web
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCStatsReport, RTCRemoteInboundRtpStreamStats
 from aiortc.contrib.media import MediaPlayer
 from requests import ConnectTimeout
+
+from util import getTupleFromStats
 
 ROOT = os.path.dirname(__file__)
 
@@ -16,6 +18,7 @@ ROOT = os.path.dirname(__file__)
 class Client:
     def __init__(self):
         self.pc = None
+        self.consumer_rtts = list()
 
     async def createOffer(self, transceiverType):
         self.pc = RTCPeerConnection()
@@ -106,6 +109,26 @@ class Client:
         else:
             return web.Response(status=503, content_type="text/plain", text="Was not even connected...")
 
+    async def calculate_stats(self, request):
+
+        if self.pc is None:
+            return
+
+        consumer_stats: RTCStatsReport = await self.pc.getStats()
+        rtt, timestamp = getTupleFromStats(consumer_stats)
+        self.consumer_rtts.append((rtt, timestamp))
+
+    async def persist_stats(self, request):
+
+        rtts = self.consumer_rtts.copy()
+        self.consumer_rtts.clear()
+
+        f = open('csv_export/rtt.csv', 'w+')
+        for rtt in rtts:
+            f.write(f'{rtt[0]},{rtt[1]}\n')
+
+        f.close()
+
 
 if __name__ == "__main__":
     client = Client()
@@ -144,6 +167,8 @@ if __name__ == "__main__":
     app.router.add_get("/startVideo", client.connectVideo)
     app.router.add_get("/startAudio", client.connectAudio)
     app.router.add_get("/stop", client.stop)
+    app.router.add_get("/calculate_stats", client.calculate_stats)
+    app.router.add_post("/persist_stats", client.persist_stats)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

@@ -155,6 +155,8 @@ async def updatePrivacyModel(request: Request):
         c.printInfo()
         track.update_model(c)
 
+    return web.Response(content_type="text/plain", text="New privacy model deployed")
+
 
 async def calculate_stats(request):
     global providers, consumers, consumer_rtts
@@ -176,6 +178,9 @@ async def calculate_stats(request):
 async def persist_stats(request):
     global consumer_rtts
 
+    if len(consumer_rtts) == 0:
+        return web.Response(status=503, content_type="text/plain", text="No RTT measurements collected")
+
     rtts = consumer_rtts.copy()
     consumer_rtts.clear()
 
@@ -184,6 +189,7 @@ async def persist_stats(request):
         f.write(f'{rtt[0]},{rtt[1]}\n')
 
     f.close()
+    return web.Response(content_type="text/plain", text=f"Wrote {len(rtts)} tuples to csv")
 
 
 async def on_shutdown(app):

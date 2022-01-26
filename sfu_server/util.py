@@ -61,6 +61,6 @@ def printExecutionTime(name: str, a: datetime, b: datetime):
 
 def getTupleFromStats(consumer_stats: RTCStatsReport):
     stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
-    rtt = stat_list[0].roundTripTime
+    rtt = round(stat_list[0].roundTripTime, 4)
     timestamp = stat_list[0].timestamp
     return rtt, timestamp

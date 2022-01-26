@@ -16,8 +16,10 @@ import ssl
 import uuid
 
 from aiohttp import web
+from aiohttp.web_request import Request
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRelay
+from aiortc.rtcrtpreceiver import RemoteStreamTrack
 
 import ModelParser
 import Models
@@ -35,6 +37,7 @@ consumerTracks = set()
 relay = MediaRelay()
 
 activeModel = None
+
 
 async def index(request):
     content = open(os.path.join(ROOT, "consumer/index.html"), "r").read()
@@ -123,20 +126,21 @@ async def consume(request):
 async def provide(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params['sdp'], type='offer')
+    tag = params['tag'] if 'tag' in params else None
 
     pc = RTCPeerConnection()
     providers.add(pc)
     print('Number of clients: ', len(providers))
 
     @pc.on('track')
-    async def on_track(track):
+    async def on_track(track: RemoteStreamTrack):
         providerTracks.append(track)
 
-        # TODO: Only pass model if media source matches
+        chain = activeModel.getChainForSource(track.kind, tag)
         if track.kind == 'video':
-            transformTrack = VideoTransformTrack(track, privacyModel=activeModel)
+            transformTrack = VideoTransformTrack(track, privacy_chain=chain)
         else:
-            transformTrack = AudioTransformTrack(track, privacyModel=activeModel)
+            transformTrack = AudioTransformTrack(track, privacy_chain=chain)
 
         transformTrack.run()
         transformedTracks.append(transformTrack)
@@ -154,6 +158,18 @@ async def provide(request):
     )
 
 
+async def updatePrivacyModel(request: Request):
+    global activeModel
+    model_raw = await request.text()
+    model_parsed = ModelParser.parseModel(model_raw)
+
+    activeModel = model_parsed
+    for track in transformedTracks:
+        c = activeModel.getChainForSource(track.kind, track.tag)
+        c.printInfo()
+        track.update_model(c)
+
+
 async def on_shutdown(app):
     # close peer connections
     coros = [pc.close() for pc in providers] + [pc.close() for pc in consumers]
@@ -167,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
     parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)")
+    parser.add_argument("--privacy-model", default=Models.faces_pixelate, help="Privacy model encoded as String")
     parser.add_argument("--port", type=int, default=4000, help="Port for HTTP server (default: 4000)")
     parser.add_argument("--verbose", "-v", action="count")
     args = parser.parse_args()
@@ -182,8 +199,9 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
-    activeModel = ModelParser.parseModel(Models.faces_pixelate)
-    activeModel.printInfo()
+    activeModel = ModelParser.parseModel(args.privacy_model)
+    for chain in activeModel.chains:
+        chain.printInfo()
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
@@ -191,6 +209,7 @@ if __name__ == "__main__":
     app.router.add_get("/client.js", javascript)
     app.router.add_post('/provide', provide)
     app.router.add_post("/consume", consume)
+    app.router.add_post("/privacyModel", updatePrivacyModel)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

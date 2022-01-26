@@ -15,10 +15,10 @@ vad = webrtcvad.Vad(3)
 class AudioTransformTrack(MediaStreamTrack):
     kind = "video"
 
-    def __init__(self, track, privacyModel, provision_timeout=10.0):
+    def __init__(self, track, privacy_chain, provision_timeout=10.0):
         super().__init__()
         self.track = track
-        self.privacyModel = privacyModel
+        self.privacy_chain = privacy_chain
         self.receive_fps = FPS_("Queue Receive FPS: ", calculate_avg=960)
         self.transform_fps = FPS_("Transformation FPS: ", calculate_avg=960)
         self.provision_timeout = provision_timeout

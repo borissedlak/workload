@@ -35,7 +35,7 @@ class CmdWithArgs:
         return self.command in transformation_functions
 
 
-class PrivacyModel:
+class PrivacyChain:
 
     def __init__(self, cmA: list[CmdWithArgs]):
         self.mediaSource = cmA[0]
@@ -58,26 +58,53 @@ class PrivacyModel:
         print("\n")
 
 
+class PrivacyModel:
+
+    def __init__(self, chains: list[PrivacyChain]):
+        self.chains = chains
+
+    # If a tag is here, this means that the provider has tagged his stream, and we should try to find a specific model
+    def getChainForSource(self, media_type, tag=None):
+        match_filter = list(filter(lambda c: c.mediaSource.command == media_type, self.chains))
+        if len(match_filter) <= 0:
+            raise ValueError("The incoming stream has an invalid media type or there is no model present to allow it")
+
+        if tag is not None:
+            filtered_tag = list(
+                filter(lambda c: 'tag' in c.mediaSource.args and c.mediaSource.args['tag'] == tag,
+                       match_filter))
+            if len(filtered_tag) <= 0:
+                print(f"No privacy chain in the model was tagged with {tag}, using untagged chains")
+            else:
+                match_filter = filtered_tag
+        return match_filter[-1]
+
+
 def parseModel(s: str):
-    commandsWithArgs = []
-    cAs = s.split('-->')
+    chains: list[PrivacyChain] = []
+    chains_raw: list[str] = s.splitlines()
 
-    for cA in cAs:
-        commandsWithArgs.append(CmdWithArgs(cA))
+    for c in chains_raw:
 
-    if not commandsWithArgs[0].isMediaSource():
-        raise ValueError(f"First Command '{commandsWithArgs[0].command}' does not specify a media source")
+        commandsWithArgs = []
+        cAs = c.split('-->')
 
-    for idx, val in enumerate(commandsWithArgs[1:]):
-        if val.command not in triggers_and_transformations:
-            raise ValueError(f"Command '{val.command}' unknown")
-        commandsWithArgs[idx+1].resolveCommand()
+        for cA in cAs:
+            commandsWithArgs.append(CmdWithArgs(cA))
 
-    return PrivacyModel(commandsWithArgs)
+        if not commandsWithArgs[0].isMediaSource():
+            raise ValueError(f"First Command '{commandsWithArgs[0].command}' does not specify a media source")
+
+        for idx, val in enumerate(commandsWithArgs[1:]):
+            if val.command not in triggers_and_transformations:
+                raise ValueError(f"Command '{val.command}' unknown")
+            commandsWithArgs[idx + 1].resolveCommand()
+
+        chains.append(PrivacyChain(commandsWithArgs))
+
+    return PrivacyModel(chains)
 
 
-# c = CmdWithArgs("Blur_Face_Pixelate:{'blocks':5}")
-# print(c.commandFunction)
-# c.resolveCommand()
-# print(c.commandFunction)
-parseModel(Models.faces_pixelate).printInfo()
+# model = parseModel(Models.faces_pixelate_with_resize)
+# # model = PrivacyModel([chain])
+# print(model.getChainForSource("video", "webcam"))

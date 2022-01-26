@@ -28,7 +28,7 @@
   - [ ] blur_simple
   - [x] blur_pixelate
   - [ ] replace_bar
-  - [ ] max_resize
+  - [x] max_resize
 
 
 #### Privacy model support
@@ -38,6 +38,9 @@
   - [x] Compile transformation names
   - [x] Compile trigger names
 - [x] Execute chain of transformations defined model
+- [x] Update model during runtime keeping streams alive
+- [ ] Allow multiple chains in model
+- [ ] Select a fitting model with media_source and tag
 
 
 ### Only for Thesis

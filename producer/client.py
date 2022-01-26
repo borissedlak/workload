@@ -18,7 +18,7 @@ ROOT = os.path.dirname(__file__)
 class Client:
     def __init__(self):
         self.pc = None
-        self.consumer_rtts = list()
+        self.producer_rtts = list()
 
     async def createOffer(self, transceiverType):
         self.pc = RTCPeerConnection()
@@ -112,18 +112,21 @@ class Client:
     async def calculate_stats(self, request):
 
         if self.pc is None:
-            return web.Response(status=503, content_type="text/plain", text="Stream not yet started")
+            return web.Response(status=503, content_type="text/plain", text="Producer stream not yet started")
 
         consumer_stats: RTCStatsReport = await self.pc.getStats()
         rtt, timestamp = getTupleFromStats(consumer_stats)
-        self.consumer_rtts.append((rtt, timestamp))
+        self.producer_rtts.append((rtt, timestamp))
 
         return web.Response(content_type="text/plain", text=f"Added new rtt to temp list, {rtt}, {timestamp}")
 
     async def persist_stats(self, request):
 
-        rtts = self.consumer_rtts.copy()
-        self.consumer_rtts.clear()
+        if len(self.producer_rtts) == 0:
+            return web.Response(status=406, content_type="text/plain", text="No RTT measurements collected")
+
+        rtts = self.producer_rtts.copy()
+        self.producer_rtts.clear()
 
         f = open('../evaluation/csv_export/producer_rtt.csv', 'w+')
         for rtt in rtts:

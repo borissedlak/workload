@@ -25,6 +25,7 @@ import ModelParser
 import Models
 from AudioTransformTrack import AudioTransformTrack
 from VideoTransformTrack import VideoTransformTrack
+from util import getTupleFromStats
 
 ROOT = os.path.dirname(__file__)
 
@@ -162,14 +163,12 @@ async def calculate_stats(request):
     global providers, consumers, consumer_rtts
 
     if len(consumers) == 0 or len(providers) == 0:
-        return web.Response(status=503, content_type="text/plain", text="Stream not yet started")
+        return web.Response(status=503, content_type="text/plain", text="Consumer stream not yet started")
 
     consumer = next(iter(consumers))
     consumer_stats: RTCStatsReport = await consumer.getStats()
 
-    stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
-    rtt = stat_list[0].roundTripTime
-    timestamp = stat_list[0].timestamp
+    rtt, timestamp = getTupleFromStats(consumer_stats)
 
     consumer_rtts.append((rtt, timestamp))
     return web.Response(content_type="text/plain", text=f"Added new rtt to temp list, {rtt}, {timestamp}")
@@ -179,7 +178,7 @@ async def persist_stats(request):
     global consumer_rtts
 
     if len(consumer_rtts) == 0:
-        return web.Response(status=503, content_type="text/plain", text="No RTT measurements collected")
+        return web.Response(status=406, content_type="text/plain", text="No RTT measurements collected")
 
     rtts = consumer_rtts.copy()
     consumer_rtts.clear()

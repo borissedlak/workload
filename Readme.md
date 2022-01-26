@@ -11,7 +11,7 @@
 
 - [x] Show absolute processing time in the SFU
 - [x] Show processing time of distinct operations
-- [ ] Determine RTT for producer &#8594; SFU &#8594; consumer
+- [x] Determine RTT for producer &#8594; SFU &#8594; consumer
 
 #### Triggers Lambdas
 

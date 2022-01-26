@@ -87,7 +87,7 @@ async def consume(request):
 
         elif track.kind == "video":
 
-            pc.addTrack(transformedTracks[len(transformedTracks) - 1])
+            pc.addTrack(relay.subscribe(transformedTracks[-1]))
 
             # if transformTrack is None:
             #     # transformTrack = VideoTransformTrack(

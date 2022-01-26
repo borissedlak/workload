@@ -3,8 +3,8 @@
 ## Work in Progress
 
 #### SFU Streaming
-- [ ] Share TransformationTracks between multiple consumers
-- [ ] Include tag in audio/video stream
+- [x] Share TransformationTracks between multiple consumers
+- [x] Include tag in audio/video stream
 
 
 #### Monitoring
@@ -39,8 +39,8 @@
   - [x] Compile trigger names
 - [x] Execute chain of transformations defined model
 - [x] Update model during runtime keeping streams alive
-- [ ] Allow multiple chains in model
-- [ ] Select a fitting model with media_source and tag
+- [x] Allow multiple chains in model
+- [x] Select a fitting model with media_source and tag
 
 
 ### Only for Thesis

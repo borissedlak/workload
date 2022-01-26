@@ -2,6 +2,14 @@
 
 ## Work in Progress
 
+#### Nvidia Jetson
+
+- [ ] Setup Jetson environment
+- [ ] Clone project in Jetson
+- [ ] Setup ONNX environment
+- [ ] Run SFU there
+- [ ] ...
+
 #### SFU Streaming
 
 - [x] Share TransformationTracks between multiple consumers

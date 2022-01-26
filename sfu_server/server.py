@@ -160,7 +160,7 @@ async def calculate_stats(request):
     global providers, consumers, consumer_rtts
 
     if len(consumers) == 0 or len(providers) == 0:
-        return
+        return web.Response(status=503, content_type="text/plain", text="Stream not yet started")
 
     consumer = next(iter(consumers))
     consumer_stats: RTCStatsReport = await consumer.getStats()
@@ -170,6 +170,7 @@ async def calculate_stats(request):
     timestamp = stat_list[0].timestamp
 
     consumer_rtts.append((rtt, timestamp))
+    return web.Response(content_type="text/plain", text=f"Added new rtt to temp list, {rtt}, {timestamp}")
 
 
 async def persist_stats(request):
@@ -178,7 +179,7 @@ async def persist_stats(request):
     rtts = consumer_rtts.copy()
     consumer_rtts.clear()
 
-    f = open('csv_export/rtt.csv', 'w+')
+    f = open('../evaluation/csv_export/consumer_rtt.csv', 'w+')
     for rtt in rtts:
         f.write(f'{rtt[0]},{rtt[1]}\n')
 

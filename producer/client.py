@@ -112,22 +112,25 @@ class Client:
     async def calculate_stats(self, request):
 
         if self.pc is None:
-            return
+            return web.Response(status=503, content_type="text/plain", text="Stream not yet started")
 
         consumer_stats: RTCStatsReport = await self.pc.getStats()
         rtt, timestamp = getTupleFromStats(consumer_stats)
         self.consumer_rtts.append((rtt, timestamp))
+
+        return web.Response(content_type="text/plain", text=f"Added new rtt to temp list, {rtt}, {timestamp}")
 
     async def persist_stats(self, request):
 
         rtts = self.consumer_rtts.copy()
         self.consumer_rtts.clear()
 
-        f = open('csv_export/rtt.csv', 'w+')
+        f = open('../evaluation/csv_export/producer_rtt.csv', 'w+')
         for rtt in rtts:
             f.write(f'{rtt[0]},{rtt[1]}\n')
 
         f.close()
+        return web.Response(content_type="text/plain", text=f"Wrote {len(rtts)} tuples to csv")
 
 
 if __name__ == "__main__":

@@ -9,10 +9,9 @@ from VideoDetector import VideoDetector
 from util import FPS_
 
 
-
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
-    detector = VideoDetector(use_cuda=True)
+    detector = VideoDetector(show_stats=False)
 
     def __init__(self, track, tag=None, privacy_chain=None, provision_timeout=10.0):
         super().__init__()

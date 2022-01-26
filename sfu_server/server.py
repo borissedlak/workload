@@ -86,23 +86,7 @@ async def consume(request):
             # pc.addTrack(video_player.audio)
 
         elif track.kind == "video":
-
             pc.addTrack(relay.subscribe(transformedTracks[-1]))
-
-            # if transformTrack is None:
-            #     # transformTrack = VideoTransformTrack(
-            #     #     relay.subscribe(video_player.video), transform=params["video_transform"]
-            #     # )
-            #     transformTrack = VideoTransformTrack(
-            #         relay.subscribe(providerTracks[0]), transform=params["video_transform"]
-            #     )
-
-            # track = ListenerTrack()
-            # consumerTracks.add(track)
-            # pc.addTrack(track)
-            # consumers.add(pc)
-
-            # pc.addTrack(providerTracks[0])
 
         @track.on("ended")
         async def on_ended():

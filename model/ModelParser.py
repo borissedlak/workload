@@ -1,6 +1,5 @@
 import ast
 
-import Models
 from Transformations import Blur_Face_Pixelate, Max_Spec_Resize
 from Triggers import Face_Trigger, Age_Trigger
 
@@ -103,7 +102,6 @@ def parseModel(s: str):
         chains.append(PrivacyChain(commandsWithArgs))
 
     return PrivacyModel(chains)
-
 
 # model = parseModel(Models.faces_pixelate_with_resize)
 # # model = PrivacyModel([chain])

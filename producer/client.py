@@ -56,10 +56,11 @@ class Client:
 
         data = json.dumps({
             "sdp": self.pc.localDescription.sdp,
-            "type": self.pc.localDescription.type})
+            "type": self.pc.localDescription.type,
+            "tag": "webcam"})
 
         try:
-            response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
+            response = requests.post("http://192.168.0.80:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()

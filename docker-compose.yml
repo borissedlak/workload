@@ -1,0 +1,8 @@
+version: '3'
+services:
+  sfu:
+    image: sfu_v1
+    ports:
+      - "4000:4000"
+    environment:
+      - privacy-model = blabla

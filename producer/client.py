@@ -6,7 +6,7 @@ import ssl
 
 import requests
 from aiohttp import web
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCStatsReport, RTCRemoteInboundRtpStreamStats
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCStatsReport
 from aiortc.contrib.media import MediaPlayer
 from requests import ConnectTimeout
 
@@ -63,7 +63,7 @@ class Client:
             "tag": "webcam"})
 
         try:
-            response = requests.post("http://192.168.0.80:4000/provide", timeout=10.0, data=data).json()
+            response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()

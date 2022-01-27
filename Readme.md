@@ -2,6 +2,12 @@
 
 ## Work in Progress
 
+### Evaluation 
+
+- [x] Dockerize Server
+- [ ] Deploy Server in AWS
+- [ ] Measure RTT for Producer
+
 #### Nvidia Jetson
 
 - [ ] Setup Jetson environment

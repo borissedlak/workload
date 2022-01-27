@@ -1,6 +1,10 @@
 # set base image (host OS)
 FROM python:3.9-slim-buster
 
+#Local dependencies for cv2
+RUN apt-get update
+RUN apt-get install ffmpeg libsm6 libxext6  -y
+
 # set the working directory in the container
 WORKDIR /src/
 

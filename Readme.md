@@ -5,8 +5,9 @@
 ### Evaluation 
 
 - [x] Dockerize Server
-- [ ] Deploy Server in AWS
+- [x] Deploy Server in AWS
 - [ ] Measure RTT for Producer
+- [ ] Look again what is going on with the FPS monitor...
 
 #### Nvidia Jetson
 

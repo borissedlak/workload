@@ -63,6 +63,7 @@ class Client:
             "tag": "webcam"})
 
         try:
+            # response = requests.post("http://3.70.235.158:4000/provide", timeout=10.0, data=data).json()
             response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
@@ -128,7 +129,7 @@ class Client:
         rtts = self.producer_rtts.copy()
         self.producer_rtts.clear()
 
-        f = open('../evaluation/csv_export/producer_rtt.csv', 'w+')
+        f = open('../evaluation/csv_export/producer_rtt_aws_europe.csv', 'w+')
 
         f.write('rtt,timestamp\n')
         for rtt in rtts:

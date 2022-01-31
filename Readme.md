@@ -60,7 +60,9 @@
 
 ### Only for Thesis
 
-- [ ] present formula for max time that a sfu can take to ensure stream in same fps. Interesting for later!</span>
+- [ ] Present formula for max time that a sfu can take to ensure stream in same fps. Interesting for later!
+- [ ] After implementing all triggers and transformations, provide stats on their performance, also related to params
+- [ ] Describe how and when images are encoded, have a little look at the codecs that are supported by WebRTC
 
 #### Not important anymore?
 

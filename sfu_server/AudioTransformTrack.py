@@ -1,4 +1,3 @@
-# TODO: If the track does not receive anymore frames from the remote peer, remove it and stop it
 import asyncio
 
 import webrtcvad
@@ -47,7 +46,6 @@ class AudioTransformTrack(MediaStreamTrack):
             try:
                 await asyncio.wait_for(self.update_frame(), timeout=self.provision_timeout)
             except asyncio.TimeoutError:
-                # TODO: Close the pc from this side as well
                 self.task.cancel()
                 print('\nTrack timed out after {}s without any frame incoming'.format(self.provision_timeout))
 

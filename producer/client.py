@@ -31,8 +31,6 @@ class Client:
 
         await self.createOffer("video")
 
-        # TODO: should I maybe only add the track once the connection stands?
-        #  Otherwise I always get 2s of video at start
         if args.media_source:
             options = {"framerate": "30", "video_size": "640x480"}
             mediaSource = MediaPlayer(args.media_source, options=options)
@@ -42,7 +40,6 @@ class Client:
                 "video=USB-Videogerät", format="dshow", options=options
             )
 
-        # TODO: Maybe try reconnect if state lost?
         @self.pc.on('signalingstatechange')
         async def signalingstatechange():
             print("signalingState: " + self.pc.signalingState)

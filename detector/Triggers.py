@@ -14,9 +14,6 @@ from util import cropFrameToBoxArea, printExecutionTime
 
 class Trigger_Function(metaclass=ABCMeta):
 
-    # @classmethod
-    # def version(self): return "1.0"
-
     @abstractmethod
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
         raise NotImplementedError

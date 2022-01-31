@@ -24,13 +24,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\evaluation\csv_export\producer_rtt.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\evaluation\csv_export\producer_rtt_aws_europe.csv">
           <value>
             <Attribute>

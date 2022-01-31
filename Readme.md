@@ -6,15 +6,15 @@
 
 - [x] Dockerize Server
 - [x] Deploy Server in AWS
-- [ ] Measure RTT for Producer
+- [x] Measure RTT for Producer
 - [ ] Look again what is going on with the FPS monitor...
 
 #### Nvidia Jetson
 
-- [ ] Setup Jetson environment
-- [ ] Clone project in Jetson
-- [ ] Setup ONNX environment
-- [ ] Run SFU there
+- [x] Setup Jetson environment
+- [x] Clone project in Jetson
+- [x] Setup ONNX environment
+- [x] Run SFU there
 - [ ] ...
 
 #### SFU Streaming

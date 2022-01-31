@@ -2,8 +2,8 @@ import ModelParser
 import Models
 from VideoDetector import *
 
-privacy_model = ModelParser.parseModel(Models.faces_pixelate)
-chain = privacy_model.getChainForSource("video", "webcam")
+privacy_model = ModelParser.parseModel("video:{'tag':'recording'}-->Gender_Trigger:{'prob':0.85}-->Blur_Area_Simple:{'blocks':5}")
+chain = privacy_model.getChainForSource("video", "recording")
 detector = VideoDetector(privacy_chain=chain, show_stats=True)
 
 detector.processImage("../producer/demo_files/images/uaf.jpg", show_result=True)

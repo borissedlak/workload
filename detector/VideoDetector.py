@@ -74,6 +74,12 @@ class VideoDetector:
     def processFrame_v3(self, stats=False):
         boxes = None
 
+        # TODO: Print total value that chain execution takes
+
+        # TODO: Maybe switch from displaying stats in methods to calculating stats here, way easier!
+        #  I can use the current util functions and the names that the function has attached
+        #  What is the max time that it might take?? Also is it slower when doing only one image and not a whole video?
+
         for cmA in self.privacy_chain.cmAs:
             if cmA.isTrigger():
                 args_with_boxes = cmA.args | {'boxes': boxes} | {'stats': stats}

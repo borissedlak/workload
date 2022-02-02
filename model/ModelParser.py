@@ -1,6 +1,6 @@
 import ast
 
-from Transformations import Max_Spec_Resize, Blur_Area_Pixelate, Blur_Area_Simple, Fill_Area_Box
+from Transformations import Max_Spec_Resize, Blur_Area_Pixelate, Fill_Area_Box
 from Triggers import Face_Trigger, Age_Trigger, Car_Plate_Trigger, Gender_Trigger
 
 source_commands = ['video', 'audio']
@@ -24,7 +24,6 @@ class CmdWithArgs:
             'Car_Plate_Trigger': Car_Plate_Trigger(),
             'Fill_Area_Box': Fill_Area_Box(),
             'Blur_Area_Pixelate': Blur_Area_Pixelate(),
-            'Blur_Area_Simple': Blur_Area_Simple(),
             'Max_Spec_Resize': Max_Spec_Resize()
         }.get(self.command)
 

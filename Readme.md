@@ -65,7 +65,9 @@
 - [ ] After implementing all triggers and transformations, provide stats on their performance, also related to params
 - [ ] Describe how and when images are encoded, have a little look at the codecs that are supported by WebRTC
 - [ ] Compare run times for functions with and without GPU acceleration
-- [ ] Do I want to measure run time for audio as well? I mean I implemented it and I want to write about it anyway for reasons of streaming
+- [ ] Do I want to measure run time for audio as well? I mean I implemented it; I want to write about it anyway for reasons of streaming
+- [ ] Document transformation and trigger parameters in a nice presentable fashion
+- [ ] Compare running time for different parameters in pixelate, ironically less anonymization effect
 
 #### Not important anymore?
 

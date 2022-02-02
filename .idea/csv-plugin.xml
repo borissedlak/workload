@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\evaluation\csv_export\function_time\Fill_Area_Box.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\evaluation\csv_export\function_time\Max_Spec_Resize.csv">
           <value>
             <Attribute>

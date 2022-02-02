@@ -34,9 +34,8 @@ df_edge = pd.read_csv(ROOT + '/csv_export/producer_rtt_edge_local.csv')
 df_aws['timestamp'] = pd.to_datetime(df_aws['timestamp'])
 df_edge['timestamp'] = pd.to_datetime(df_edge['timestamp'])
 
-# phone_mean = df_phone['rtt'].mean()
-# laptop_mean = df_laptop['rtt'].mean()
-# same_mean = df_same['rtt'].mean()
+aws_mean = df_aws['rtt'].mean()
+edge_mean = df_edge['rtt'].mean()
 
 fig, ax = plt.subplots()
 

@@ -61,7 +61,7 @@ class Client:
 
         try:
             # response = requests.post("http://3.70.235.158:4000/provide", timeout=10.0, data=data).json()
-            response = requests.post("http://192.168.0.80:4000/provide", timeout=10.0, data=data).json()
+            response = requests.post("http://192.168.0.115:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()
@@ -167,8 +167,6 @@ if __name__ == "__main__":
         ssl_context = None
     app = web.Application()
 
-    # if args.auto_start:
-    #     asyncio.run(client.connect(None))
 
     app.router.add_get("/startVideo", client.connectVideo)
     app.router.add_get("/startAudio", client.connectAudio)

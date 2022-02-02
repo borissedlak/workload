@@ -91,3 +91,4 @@ class VideoDetector:
             printExecutionTime(cmA.commandFunction.function_name, datetime.now(), start_time)
 
         printExecutionTime("Overall Chain", datetime.now(), overall_time)
+        print("=============================================")

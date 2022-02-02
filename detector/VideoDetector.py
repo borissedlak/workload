@@ -1,16 +1,12 @@
 # from https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
+from datetime import datetime
 
 import cv2
 import imutils
 from imutils.video import FPS
 
 from ModelParser import PrivacyChain
-from Transformations import Blur_Face_Pixelate
-from Triggers import Face_Trigger, Age_Trigger
-
-face_trigger = Face_Trigger()
-age_trigger = Age_Trigger()
-blur_pixelate = Blur_Face_Pixelate()
+from util import printExecutionTime
 
 
 class VideoDetector:
@@ -36,7 +32,7 @@ class VideoDetector:
         self.processFrame_v3(stats=self.show_stats)
 
         if show_result:
-            cv2.imshow("outpt", self.img)
+            cv2.imshow("output", self.img)
             cv2.waitKey(0)
 
     def processVideo(self, videoName, show_result=False):
@@ -53,7 +49,7 @@ class VideoDetector:
         while success:
             self.processFrame_v3(stats=self.show_stats)
             if show_result:
-                cv2.imshow("outpt", self.img)
+                cv2.imshow("output", self.img)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
@@ -74,23 +70,24 @@ class VideoDetector:
     def processFrame_v3(self, stats=False):
         boxes = None
 
-        # TODO: Print total value that chain execution takes
-
-        # TODO: Maybe switch from displaying stats in methods to calculating stats here, way easier!
-        #  I can use the current util functions and the names that the function has attached
-        #  What is the max time that it might take?? Also is it slower when doing only one image and not a whole video?
+        overall_time = None
+        if stats:
+            overall_time = datetime.now()
 
         for cmA in self.privacy_chain.cmAs:
+
+            start_time = None
+            if stats:
+                start_time = datetime.now()
+
             if cmA.isTrigger():
-                args_with_boxes = cmA.args | {'boxes': boxes} | {'stats': stats}
+                args_with_boxes = cmA.args | {'boxes': boxes}
                 self.img, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)
             if cmA.isTransformation():
-                args_with_boxes = cmA.args | {'boxes': boxes} | {'stats': stats}
+                args_with_boxes = cmA.args | {'boxes': boxes}
                 self.img = cmA.commandFunction.transform(self.img, options=args_with_boxes)
                 boxes = None
 
-        # self.img, boxes = face_trigger.check(self.img, options={'prob': 0.85, 'stats': stats})
-        # self.img, boxes = age_trigger.check(self.img,
-        #                                     options={'prob': 0.85, 'label': '(25-32)', 'boxes': boxes, 'debug': True,
-        #                                              'stats': stats})
-        # self.img = blur_pixelate.transform(self.img, options={'boxes': boxes, 'blocks': 5, 'stats': stats})
+            printExecutionTime(cmA.commandFunction.function_name, datetime.now(), start_time)
+
+        printExecutionTime("Overall Chain", datetime.now(), overall_time)

@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from datetime import datetime
 from os.path import join, dirname
 from typing import Tuple
 
@@ -9,7 +8,7 @@ import onnxruntime as ort
 from av.frame import Frame
 
 from box_utils import predict
-from util import cropFrameToBoxArea, printExecutionTime
+from util import cropFrameToBoxArea
 
 
 class Trigger_Function(metaclass=ABCMeta):
@@ -29,10 +28,6 @@ class Face_Trigger(Trigger_Function):
     face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
-        self.start_time = None
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
-
         _image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         _image = cv2.resize(_image, (320, 240))
         image_mean = np.array([127, 127, 127])
@@ -45,7 +40,6 @@ class Face_Trigger(Trigger_Function):
         confidences, boxes = self.face_detector.run(None, {input_name: _image})
         boxes, labels, probs = predict(frame.shape[1], frame.shape[0], confidences, boxes, options['prob'])
 
-        printExecutionTime(self.function_name, datetime.now(), self.start_time)
         return frame, boxes
 
 
@@ -57,9 +51,6 @@ class Age_Trigger(Trigger_Function):
 
     def check(self, frame, options=None):
         boxes_hit = []
-        self.start_time = None
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         for i in range(options['boxes'].shape[0]):
             box = options['boxes'][i]
@@ -83,7 +74,6 @@ class Age_Trigger(Trigger_Function):
                 cv2.putText(frame, f'{age}', (box[0] - 50, box[1] - 25), cv2.FONT_HERSHEY_SIMPLEX,
                             1.25, (0, 0, 0), 2, cv2.LINE_AA)
 
-        printExecutionTime(self.function_name, datetime.now(), self.start_time)
         return frame, np.array(boxes_hit)
 
 
@@ -96,9 +86,6 @@ class Gender_Trigger(Trigger_Function):
 
     def check(self, frame, options=None):
         boxes_hit = []
-        self.start_time = None
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         for i in range(options['boxes'].shape[0]):
             box = options['boxes'][i]
@@ -122,8 +109,8 @@ class Gender_Trigger(Trigger_Function):
                 cv2.putText(frame, f'{age}', (box[0] - 50, box[1] - 25), cv2.FONT_HERSHEY_SIMPLEX,
                             1.25, (0, 0, 0), 2, cv2.LINE_AA)
 
-        printExecutionTime(self.function_name, datetime.now(), self.start_time)
         return frame, np.array(boxes_hit)
+
 
 # TODO: Make
 class Car_Plate_Trigger(Trigger_Function):
@@ -132,10 +119,6 @@ class Car_Plate_Trigger(Trigger_Function):
     face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
-        self.start_time = None
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
-
         _image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         _image = cv2.resize(_image, (320, 240))
         image_mean = np.array([127, 127, 127])
@@ -148,5 +131,4 @@ class Car_Plate_Trigger(Trigger_Function):
         confidences, boxes = self.face_detector.run(None, {input_name: _image})
         boxes, labels, probs = predict(frame.shape[1], frame.shape[0], confidences, boxes, options['prob'])
 
-        printExecutionTime(self.function_name, datetime.now(), self.start_time)
         return frame, boxes

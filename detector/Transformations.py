@@ -26,13 +26,9 @@ class Blur_Area_Pixelate(Transformation_Function):
 
     # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         # Return the image if there is no more boxes to blur
         if options['boxes'].size == 0:
-            printExecutionTime(self.function_name, datetime.now(), self.start_time)
-            self.start_time = None
             return image
         else:
             box = options['boxes'][0]
@@ -69,13 +65,9 @@ class Blur_Area_Simple(Transformation_Function):
 
     # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         # Return the image if there is no more boxes to blur
         if options['boxes'].size == 0:
-            printExecutionTime(self.function_name, datetime.now(), self.start_time)
-            self.start_time = None
             return image
         else:
             box = options['boxes'][0]
@@ -113,13 +105,9 @@ class Fill_Area_Box(Transformation_Function):
 
     # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         # Return the image if there is no more boxes to blur
         if options['boxes'].size == 0:
-            printExecutionTime(self.function_name, datetime.now(), self.start_time)
-            self.start_time = None
             return image
         else:
             box = options['boxes'][0]
@@ -155,16 +143,11 @@ class Max_Spec_Resize(Transformation_Function):
 
     # Always requires a box as input, even if everything is to blur it must specify the whole area
     def transform(self, image, options=None) -> Frame:
-        if 'stats' in options and options['stats']:
-            self.start_time = datetime.now()
 
         resized = image
         if 'max_width' in options and resized.shape[1] > options['max_width']:
             resized = imutils.resize(resized, width=options['max_width'])
         elif 'max_height' in options and resized.shape[0] > options['max_height']:
             resized = imutils.resize(resized, width=options['max_height'])
-
-        printExecutionTime(self.function_name, datetime.now(), self.start_time)
-        self.start_time = None
 
         return resized

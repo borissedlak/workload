@@ -7,7 +7,9 @@
 - [x] Dockerize Server
 - [x] Deploy Server in AWS
 - [x] Measure RTT for Producer
-- [ ] Look again what is going on with the FPS monitor...
+- [x] Calculate run times for functions
+- [x] Export run times as csv
+- [ ] Measure run time for audio as well...
 
 #### Nvidia Jetson
 
@@ -15,7 +17,6 @@
 - [x] Clone project in Jetson
 - [x] Setup ONNX environment
 - [x] Run SFU there
-- [ ] ...
 
 #### SFU Streaming
 
@@ -31,11 +32,11 @@
 #### Triggers Lambdas
 
 - [x] Run multiple ONNX models for image analysis
-- [ ] Define common interface for triggers
+- [x] Define common interface for triggers
     - [x] Face Recognition
-    - [ ] Gender Detection
+    - [x] Gender Detection
     - [x] Age Detection
-    - [ ] Car Plate Detection
+    - [x] Car Plate Detection
 
 #### Transformations Lambdas
 
@@ -63,6 +64,8 @@
 - [ ] Present formula for max time that a sfu can take to ensure stream in same fps. Interesting for later!
 - [ ] After implementing all triggers and transformations, provide stats on their performance, also related to params
 - [ ] Describe how and when images are encoded, have a little look at the codecs that are supported by WebRTC
+- [ ] Compare run times for functions with and without GPU acceleration
+- [ ] Do I want to measure run time for audio as well? I mean I implemented it and I want to write about it anyway for reasons of streaming
 
 #### Not important anymore?
 

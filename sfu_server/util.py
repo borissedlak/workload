@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 
 import numpy as np
-# crop image
 from aiortc import RTCStatsReport, RTCRemoteInboundRtpStreamStats
 
 
@@ -57,6 +56,20 @@ def diffAsStringInMS(a: datetime, b: datetime):
 def printExecutionTime(name: str, a: datetime, b: datetime):
     if a is not None and b is not None:
         print(f' {name} took {diffAsStringInMS(a, b)}ms')
+        return diffAsStringInMS(a, b)
+    return 0
+
+
+def write_execution_times(write_store):
+    for function_name in write_store.keys():
+
+        f = open(f'../evaluation/csv_export/function_time/{function_name}.csv', 'w+')
+        f.write('execution_time,timestamp\n')
+
+        for (t, delta) in write_store[function_name]:
+            f.write(f'{t},{delta}\n')
+
+        f.close()
 
 
 def getTupleFromStats(consumer_stats: RTCStatsReport):

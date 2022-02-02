@@ -6,17 +6,19 @@ import imutils
 from imutils.video import FPS
 
 from ModelParser import PrivacyChain
-from util import printExecutionTime
+from util import printExecutionTime, write_execution_times
 
 
 class VideoDetector:
     def __init__(self, privacy_chain: PrivacyChain = None, output_width=None, confidence_threshold=0.5,
-                 show_stats=False):
+                 display_stats=False, write_stats=False):
         self.img = None
         self.output_width = output_width
         self.confidence_threshold = confidence_threshold
         self.privacy_chain = privacy_chain
-        self.show_stats = show_stats
+        self.display_stats = display_stats
+        self.write_stats = write_stats
+        self.write_store = None
 
     def processImage(self, img_path=None, img=None, show_result=False):
         if img_path is not None:
@@ -29,7 +31,7 @@ class VideoDetector:
 
         (self.height, self.width) = self.img.shape[:2]
 
-        self.processFrame_v3(stats=self.show_stats)
+        self.processFrame_v3()
 
         if show_result:
             cv2.imshow("output", self.img)
@@ -46,8 +48,11 @@ class VideoDetector:
 
         fps = FPS().start()
 
+        if self.write_stats:
+            self.write_store = {}
+
         while success:
-            self.processFrame_v3(stats=self.show_stats)
+            self.processFrame_v3()
             if show_result:
                 cv2.imshow("output", self.img)
 
@@ -64,20 +69,23 @@ class VideoDetector:
         fps.stop()
         print("Elapsed time: {:.2f}".format(fps.elapsed()))
         print("FPS: {:.2f}".format(fps.fps()))
+        if self.write_stats:
+            write_execution_times(self.write_store)
 
         cap.release()
 
-    def processFrame_v3(self, stats=False):
+    def processFrame_v3(self):
         boxes = None
 
         overall_time = None
-        if stats:
+        if self.display_stats:
             overall_time = datetime.now()
 
         for cmA in self.privacy_chain.cmAs:
 
+            function_name = cmA.commandFunction.function_name
             start_time = None
-            if stats:
+            if self.display_stats:
                 start_time = datetime.now()
 
             if cmA.isTrigger():
@@ -88,7 +96,14 @@ class VideoDetector:
                 self.img = cmA.commandFunction.transform(self.img, options=args_with_boxes)
                 boxes = None
 
-            printExecutionTime(cmA.commandFunction.function_name, datetime.now(), start_time)
+            delta = printExecutionTime(function_name, datetime.now(), start_time)
+
+            if self.write_stats:
+                if function_name in self.write_store:
+                    self.write_store[function_name].append((delta, datetime.now()))
+                else:
+                    self.write_store[function_name] = []
+                    self.write_store[function_name].append((delta, datetime.now()))
 
         printExecutionTime("Overall Chain", datetime.now(), overall_time)
         print("=============================================")

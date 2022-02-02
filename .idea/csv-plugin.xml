@@ -24,6 +24,34 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\evaluation\csv_export\function_time\Blur_Area_Pixelate.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\evaluation\csv_export\function_time\Car_Plate_Trigger.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\evaluation\csv_export\function_time\Face_Trigger.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\evaluation\csv_export\function_time\Max_Spec_Resize.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\evaluation\csv_export\producer_rtt_aws_europe.csv">
           <value>
             <Attribute>

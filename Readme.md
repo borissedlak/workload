@@ -41,10 +41,9 @@
 #### Transformations Lambdas
 
 - [x] Define common interface for transformations
-- [ ] Implement transformations with interface
-    - [ ] blur_simple
+- [x] Implement transformations with interface
     - [x] blur_pixelate
-    - [ ] replace_bar
+    - [x] replace_bar
     - [x] max_resize
 
 #### Privacy model support

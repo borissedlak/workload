@@ -1,6 +1,7 @@
 opencv-python~=4.5.5.62
 numpy~=1.22.1
-onnxruntime~=1.10.0
+# onnxruntime~=1.10.0
+onnxruntime-gpu~=1.10.0
 av~=8.1.0
 imutils~=0.5.4
 requests~=2.27.1

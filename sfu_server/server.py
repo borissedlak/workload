@@ -23,7 +23,7 @@ from aiortc.rtcrtpreceiver import RemoteStreamTrack
 
 import ModelParser
 import Models
-# from AudioTransformTrack import AudioTransformTrack
+from AudioTransformTrack import AudioTransformTrack
 from VideoTransformTrack import VideoTransformTrack
 from util import getTupleFromStats
 
@@ -127,8 +127,8 @@ async def provide(request):
         if track.kind == 'video':
             transformTrack = VideoTransformTrack(track, privacy_chain=chain)
         else:
-            transformTrack = VideoTransformTrack(track, privacy_chain=chain)
-            # transformTrack = AudioTransformTrack(track, privacy_chain=chain)
+            # transformTrack = VideoTransformTrack(track, privacy_chain=chain)
+            transformTrack = AudioTransformTrack(track, privacy_chain=chain)
 
         transformTrack.run()
         transformedTracks.append(transformTrack)

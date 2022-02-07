@@ -10,7 +10,7 @@ from util import FPS_
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
-    detector = VideoDetector(show_stats=False)
+    detector = VideoDetector(display_stats=False)
 
     def __init__(self, track, tag=None, privacy_chain=None, provision_timeout=10.0):
         super().__init__()

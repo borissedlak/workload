@@ -125,7 +125,7 @@ async def provide(request):
 
         cfs = activeModel.getChainForSource(track.kind, tag)
         if track.kind == 'video':
-            transformTrack = VideoTransformTrack(track, privacy_chain=cfs, measure_live_time=True)
+            transformTrack = VideoTransformTrack(track, privacy_chain=cfs, measure_live_time=False)
         else:
             # transformTrack = VideoTransformTrack(track, privacy_chain=chain)
             transformTrack = AudioTransformTrack(track, privacy_chain=cfs)

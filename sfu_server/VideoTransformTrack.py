@@ -51,7 +51,7 @@ class VideoTransformTrack(MediaStreamTrack):
 
         dif_receive = self.receive_fps.update_and_print()
         if self.measure_live_time:
-            self.live_time_received.append((dif_receive, datetime.now()))
+            self.live_time_received.append((int(1000 * dif_receive), datetime.now()))
 
         if self.frame_queue.full():
             self.frame_queue.get_nowait()

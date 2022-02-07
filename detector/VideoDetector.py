@@ -49,7 +49,7 @@ class VideoDetector:
         fps = FPS().start()
 
         if self.write_stats:
-            self.write_store = {}
+            self.write_store = {"Overall_Chain": []}
 
         while success:
             self.processFrame_v3()
@@ -105,5 +105,7 @@ class VideoDetector:
                     self.write_store[function_name] = []
                     self.write_store[function_name].append((delta, datetime.now()))
 
-        printExecutionTime("Overall Chain", datetime.now(), overall_time)
-        print("=============================================")
+        overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
+
+        if self.write_stats:
+            self.write_store["Overall_Chain"].append((overall_delta, datetime.now()))

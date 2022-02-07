@@ -123,12 +123,12 @@ async def provide(request):
     async def on_track(track: RemoteStreamTrack):
         providerTracks.append(track)
 
-        chain = activeModel.getChainForSource(track.kind, tag)
+        cfs = activeModel.getChainForSource(track.kind, tag)
         if track.kind == 'video':
-            transformTrack = VideoTransformTrack(track, privacy_chain=chain)
+            transformTrack = VideoTransformTrack(track, privacy_chain=cfs, measure_live_time=True)
         else:
             # transformTrack = VideoTransformTrack(track, privacy_chain=chain)
-            transformTrack = AudioTransformTrack(track, privacy_chain=chain)
+            transformTrack = AudioTransformTrack(track, privacy_chain=cfs)
 
         transformTrack.run()
         transformedTracks.append(transformTrack)

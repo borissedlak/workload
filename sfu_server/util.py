@@ -34,6 +34,8 @@ class FPS_:
             sys.stdout.write(msg)
             sys.stdout.flush()
 
+        return dif
+
 
 class Cyclical_Array:
     def __init__(self, size):
@@ -63,7 +65,8 @@ def printExecutionTime(name: str, a: datetime, b: datetime):
 def write_execution_times(write_store):
     for function_name in write_store.keys():
 
-        f = open(f'../evaluation/csv_export/function_time/{function_name}.csv', 'w+')
+        # TODO: Put chain alias here
+        f = open(f'../evaluation/csv_export/function_time/chain_alias_here/{function_name}.csv', 'w+')
         f.write('execution_time,timestamp\n')
 
         for (t, delta) in write_store[function_name]:

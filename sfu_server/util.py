@@ -62,11 +62,10 @@ def printExecutionTime(name: str, a: datetime, b: datetime):
     return 0
 
 
-def write_execution_times(write_store):
+def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
-        # TODO: Put chain alias here
-        f = open(f'../evaluation/csv_export/function_time/chain_alias_here/{function_name}.csv', 'w+')
+        f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
         f.write('execution_time,timestamp\n')
 
         for (t, delta) in write_store[function_name]:

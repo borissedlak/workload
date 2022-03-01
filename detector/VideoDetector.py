@@ -38,8 +38,8 @@ class VideoDetector:
             cv2.imshow("output", self.img)
             cv2.waitKey(0)
 
-    def processVideo(self, videoName, show_result=False):
-        cap = cv2.VideoCapture(videoName)
+    def processVideo(self, video_path, video_name, model_name, show_result=False):
+        cap = cv2.VideoCapture(video_path + video_name + ".mp4")
         if not cap.isOpened():
             print("Error opening video ...")
             return
@@ -71,7 +71,7 @@ class VideoDetector:
         print("Elapsed time: {:.2f}".format(fps.elapsed()))
         print("FPS: {:.2f}".format(fps.fps()))
         if self.write_stats:
-            write_execution_times(self.write_store)
+            write_execution_times(self.write_store, video_name, model_name)
 
         cap.release()
 

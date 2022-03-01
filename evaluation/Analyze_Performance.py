@@ -63,7 +63,7 @@ def analyze_performance(VIDEO, MODEL):
     ax.set_xlabel("Total time in s")
     ax.set_ylabel("Milliseconds (ms)")
     ax.set_title(f"Performance of SFU processing {VIDEO.replace('_', '#')} with {MODEL.replace('_', '#')}")
-    fig.savefig(ROOT + f'/figures/{VIDEO}/{MODEL}/function_performance.png', bbox_inches='tight')
+    fig.savefig(ROOT + f'/figures/{VIDEO}/{MODEL}/performance_{VIDEO}_{MODEL}.png', bbox_inches='tight')
     fig.show()
 
 
@@ -73,3 +73,7 @@ analyze_performance('video_1', 'model_1')
 analyze_performance('video_1', 'model_2')
 analyze_performance('video_1', 'model_3')
 analyze_performance('video_1', 'model_4')
+analyze_performance('video_2', 'model_1')
+analyze_performance('video_2', 'model_2')
+analyze_performance('video_2', 'model_3')
+analyze_performance('video_2', 'model_4')

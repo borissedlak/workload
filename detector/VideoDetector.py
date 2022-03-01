@@ -34,6 +34,7 @@ class VideoDetector:
         self.processFrame_v3()
 
         if show_result:
+            # cv2.imwrite("../evaluation/figures/zoom_call_blurred.jpg", self.img)
             cv2.imshow("output", self.img)
             cv2.waitKey(0)
 

@@ -61,7 +61,7 @@ class Client:
 
         try:
             # response = requests.post("http://3.70.235.158:4000/provide", timeout=10.0, data=data).json()
-            response = requests.post("http://192.168.0.115:4000/provide", timeout=10.0, data=data).json()
+            response = requests.post("http://localhost:4000/provide", timeout=10.0, data=data).json()
         except ConnectTimeout:
             mediaSource.video.stop()
             await self.pc.close()

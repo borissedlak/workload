@@ -87,7 +87,7 @@ class VideoTransformTrack(MediaStreamTrack):
 
     def export_live_time(self):
 
-        f = open('../evaluation/csv_export/overall_time/global_time_received.csv', 'w+')
+        f = open('../evaluation/csv_export/function_time/global_time_received.csv', 'w+')
 
         f.write('delta,timestamp\n')
         for time in self.live_time_received:
@@ -95,7 +95,7 @@ class VideoTransformTrack(MediaStreamTrack):
 
         f.close()
 
-        f = open('../evaluation/csv_export/overall_time/global_time_transformed.csv', 'w+')
+        f = open('../evaluation/csv_export/function_time/global_time_transformed.csv', 'w+')
 
         f.write('delta,timestamp\n')
         for time in self.live_time_transformed:

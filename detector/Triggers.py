@@ -54,6 +54,7 @@ class Age_Trigger(Trigger_Function):
 
         for i in range(options['boxes'].shape[0]):
             box = options['boxes'][i]
+            box = np.where(box <= 0, 0, box)
             _image = cropFrameToBoxArea(frame, box)
 
             _image = cv2.cvtColor(_image, cv2.COLOR_BGR2RGB)
@@ -89,9 +90,12 @@ class Gender_Trigger(Trigger_Function):
 
         for i in range(options['boxes'].shape[0]):
             box = options['boxes'][i]
+            box = np.where(box <= 0, 0, box)
             _image = cropFrameToBoxArea(frame, box)
-
+            # try:
             _image = cv2.cvtColor(_image, cv2.COLOR_BGR2RGB)
+            # except cv2.error:
+            #     print("error")
             _image = cv2.resize(_image, (224, 224))
             image_mean = np.array([104, 117, 123])
             _image = _image - image_mean

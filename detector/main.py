@@ -21,14 +21,14 @@ detector_3 = VideoDetector(privacy_chain=chain_3, display_stats=True, write_stat
 detector_4 = VideoDetector(privacy_chain=chain_4, display_stats=True, write_stats=True)
 
 # detector.processImage("../producer/demo_files/images/zoom_call.jpg", show_result=True)
-detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1", show_result=False, )
-detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_2", show_result=False, )
-detector_3.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_3", show_result=False, )
-detector_4.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_4", show_result=False, )
+detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1", show_result=True)
+detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_2", show_result=True)
+detector_3.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_3", show_result=True)
+detector_4.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_4", show_result=True)
 
-# detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_1", show_result=False, )
-# detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_2", show_result=False, )
-# detector_3.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_3", show_result=False, )
-# detector_4.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_4", show_result=False, )
+detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_1", show_result=True)
+detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_2", show_result=True)
+detector_3.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_3", show_result=True)
+detector_4.processVideo(video_path="../producer/demo_files/videos/", video_name="video_2", model_name="model_4", show_result=True)
 
 sys.exit()

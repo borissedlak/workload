@@ -8,6 +8,8 @@ faces_pixelate_with_resize = "video:{'tag':'webcam'}-->Max_Spec_Resize:{'max_wid
 nothing = "video:{'tag':'webcam'}"
 
 model_1 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Blur_Area_Pixelate:{'blocks':5}"
+model_1_1 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Blur_Area_Pixelate:{'blocks':1}"
+model_1_50 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Blur_Area_Pixelate:{'blocks':50}"
 model_2 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Age_Trigger:{'prob':0.85, 'label':'(25-32)'}-->Blur_Area_Pixelate:{'blocks':5}"
 model_3 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Gender_Trigger:{'prob':0.85, 'label':'Male'}-->Blur_Area_Pixelate:{'blocks':5}"
 model_4 = "video:{'tag':'webcam'}-->Face_Trigger:{'prob':0.85}-->Fill_Area_Box:{}"

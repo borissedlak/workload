@@ -79,6 +79,7 @@ def analyze_performance(VIDEO, MODEL, M, FRAMES_COUNT):
     ax.set_xlabel("Index of Frame in Stream")
     ax.set_ylabel("Milliseconds (ms)")
     ax.set_title(f"Performance of SFU processing {VIDEO.replace('_', '#')} with {MODEL.replace('_', '#')}")
+    # ax.set_title(f"Performance of SFU processing {VIDEO.replace('_', '#')} with model #1 - 50 blocks")
     fig.savefig(ROOT + f'/figures/{VIDEO}/{MODEL}/performance_{VIDEO}_{MODEL}.png', bbox_inches='tight')
     fig.show()
 
@@ -97,53 +98,56 @@ def analyze_performance(VIDEO, MODEL, M, FRAMES_COUNT):
 
 ##########################################################################
 
+# analyze_performance('video_1', 'model_1_1', 1, 302)
+# analyze_performance('video_1', 'model_1_50', 1, 302)
+
 analyze_performance('video_1', 'model_1', 1, 302)
-analyze_performance('video_1', 'model_2', 2, 302)
-analyze_performance('video_1', 'model_3', 3, 302)
-analyze_performance('video_1', 'model_4', 4, 302)
-
-cdf = pd.concat(boxplot_model_list)
-mdf = pd.melt(cdf, id_vars=['Model'], var_name=['Letter'])
-
-ax = sns.boxplot(x="Model", y="value", hue="Letter", data=mdf)
-ax.legend(loc=1)
-ax.set_title("Individual performance for Video #1")
-ax.set_xlabel("Index of Model")
-ax.set_ylabel("Milliseconds (ms)")
-plt.savefig(ROOT + f'/figures/video_1/performance_box_video_1.png', bbox_inches='tight')
-plt.show()
-
-ax = overall_list.plot()
-ax.legend(loc=1)
-ax.set_title("Individual performance for Video #1")
-ax.set_xlabel("Index of Frame in Stream")
-ax.set_ylabel("Milliseconds (ms)")
-plt.savefig(ROOT + f'/figures/video_1/performance_overall_video_1.png', bbox_inches='tight')
-plt.show()
-
-overall_list = pd.DataFrame({'Video#2 Model#1': []})
-boxplot_model_list = []
-
-analyze_performance('video_2', 'model_1', 1, 163)
-analyze_performance('video_2', 'model_2', 2, 163)
-analyze_performance('video_2', 'model_3', 3, 163)
-analyze_performance('video_2', 'model_4', 4, 163)
-
-cdf = pd.concat(boxplot_model_list)
-mdf = pd.melt(cdf, id_vars=['Model'], var_name=['Letter'])
-
-ax = sns.boxplot(x="Model", y="value", hue="Letter", data=mdf)
-ax.legend(loc=1)
-ax.set_title("Individual performance for Video #2")
-ax.set_xlabel("Index of Model")
-ax.set_ylabel("Milliseconds (ms)")
-plt.savefig(ROOT + f'/figures/video_2/performance_box_video_2.png', bbox_inches='tight')
-plt.show()
-
-ax = overall_list.plot()
-ax.legend(loc=1)
-ax.set_title("Overall performances for Video #2")
-ax.set_xlabel("Index of Frame in Stream")
-ax.set_ylabel("Milliseconds (ms)")
-plt.savefig(ROOT + f'/figures/video_2/performance_overall_video_2.png', bbox_inches='tight')
-plt.show()
+# analyze_performance('video_1', 'model_2', 2, 302)
+# analyze_performance('video_1', 'model_3', 3, 302)
+# analyze_performance('video_1', 'model_4', 4, 302)
+#
+# cdf = pd.concat(boxplot_model_list)
+# mdf = pd.melt(cdf, id_vars=['Model'], var_name=['Letter'])
+#
+# ax = sns.boxplot(x="Model", y="value", hue="Letter", data=mdf)
+# ax.legend(loc=1)
+# ax.set_title("Individual performance for Video #1")
+# ax.set_xlabel("Index of Model")
+# ax.set_ylabel("Milliseconds (ms)")
+# plt.savefig(ROOT + f'/figures/video_1/performance_box_video_1.png', bbox_inches='tight')
+# plt.show()
+#
+# ax = overall_list.plot()
+# ax.legend(loc=1)
+# ax.set_title("Individual performance for Video #1")
+# ax.set_xlabel("Index of Frame in Stream")
+# ax.set_ylabel("Milliseconds (ms)")
+# plt.savefig(ROOT + f'/figures/video_1/performance_overall_video_1.png', bbox_inches='tight')
+# plt.show()
+#
+# overall_list = pd.DataFrame({'Video#2 Model#1': []})
+# boxplot_model_list = []
+#
+# analyze_performance('video_2', 'model_1', 1, 163)
+# analyze_performance('video_2', 'model_2', 2, 163)
+# analyze_performance('video_2', 'model_3', 3, 163)
+# analyze_performance('video_2', 'model_4', 4, 163)
+#
+# cdf = pd.concat(boxplot_model_list)
+# mdf = pd.melt(cdf, id_vars=['Model'], var_name=['Letter'])
+#
+# ax = sns.boxplot(x="Model", y="value", hue="Letter", data=mdf)
+# ax.legend(loc=1)
+# ax.set_title("Individual performance for Video #2")
+# ax.set_xlabel("Index of Model")
+# ax.set_ylabel("Milliseconds (ms)")
+# plt.savefig(ROOT + f'/figures/video_2/performance_box_video_2.png', bbox_inches='tight')
+# plt.show()
+#
+# ax = overall_list.plot()
+# ax.legend(loc=1)
+# ax.set_title("Overall performances for Video #2")
+# ax.set_xlabel("Index of Frame in Stream")
+# ax.set_ylabel("Milliseconds (ms)")
+# plt.savefig(ROOT + f'/figures/video_2/performance_overall_video_2.png', bbox_inches='tight')
+# plt.show()

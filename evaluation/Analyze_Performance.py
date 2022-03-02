@@ -102,9 +102,9 @@ def analyze_performance(VIDEO, MODEL, M, FRAMES_COUNT):
 # analyze_performance('video_1', 'model_1_50', 1, 302)
 
 analyze_performance('video_1', 'model_1', 1, 302)
-# analyze_performance('video_1', 'model_2', 2, 302)
-# analyze_performance('video_1', 'model_3', 3, 302)
-# analyze_performance('video_1', 'model_4', 4, 302)
+analyze_performance('video_1', 'model_2', 2, 302)
+analyze_performance('video_1', 'model_3', 3, 302)
+analyze_performance('video_1', 'model_4', 4, 302)
 #
 # cdf = pd.concat(boxplot_model_list)
 # mdf = pd.melt(cdf, id_vars=['Model'], var_name=['Letter'])

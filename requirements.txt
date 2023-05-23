@@ -1,12 +1,12 @@
 opencv-python~=4.5.5.62
 numpy~=1.22.1
 # onnxruntime~=1.10.0
-onnxruntime-gpu~=1.10.0
-av~=8.1.0
+onnxruntime-gpu~=1.14.0
+av~=10.0.0
 imutils~=0.5.4
 requests~=2.27.1
 aiohttp~=3.8.1
-aiortc~=1.2.1
+aiortc~=1.5.0
 matplotlib~=3.5.1
 pandas~=1.4.0
 # PyAudio~=0.2.11

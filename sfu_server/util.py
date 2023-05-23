@@ -68,8 +68,8 @@ def write_execution_times(write_store, video_name, model_name):
         f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
         f.write('execution_time,timestamp\n')
 
-        for (t, delta) in write_store[function_name]:
-            f.write(f'{t},{delta}\n')
+        for (t, delta, cpu, memory) in write_store[function_name]:
+            f.write(f'{t},{delta},{cpu},{memory}\n')
 
         f.close()
 

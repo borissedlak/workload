@@ -7,6 +7,8 @@ from imutils.video import FPS
 
 from ModelParser import PrivacyChain
 from util import printExecutionTime, write_execution_times
+import psutil
+from gpiozero import CPUTemperature
 
 
 class VideoDetector:
@@ -26,6 +28,7 @@ class VideoDetector:
         else:
             self.img = img
 
+        self.write_store = {"Overall_Chain": []}
         if self.output_width is not None:
             self.img = imutils.resize(self.img, width=self.output_width)
 
@@ -34,7 +37,8 @@ class VideoDetector:
         self.processFrame_v3()
 
         if show_result:
-            # cv2.imwrite("../evaluation/figures/zoom_call_blurred.jpg", self.img)
+            # cv2.startWindowThread()
+            # cv2.imwrite("../evaluation/figures/test.jpg", self.img)
             cv2.imshow("output", self.img)
             cv2.waitKey(0)
 
@@ -68,7 +72,7 @@ class VideoDetector:
                 (self.height, self.width) = self.img.shape[:2]
 
         fps.stop()
-        print("Elapsed time: {:.2f}".format(fps.elapsed()))
+        print("Elapsed time: {:.2f}s".format(fps.elapsed()))
         print("FPS: {:.2f}".format(fps.fps()))
         if self.write_stats:
             write_execution_times(self.write_store, video_name, model_name)
@@ -101,12 +105,13 @@ class VideoDetector:
 
             if self.write_stats:
                 if function_name in self.write_store:
-                    self.write_store[function_name].append((delta, datetime.now()))
+                    self.write_store[function_name].append((delta, datetime.now(), 0, 0))
                 else:
                     self.write_store[function_name] = []
-                    self.write_store[function_name].append((delta, datetime.now()))
+                    self.write_store[function_name].append((delta, datetime.now(), 0, 0))
 
         overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
 
         if self.write_stats:
-            self.write_store["Overall_Chain"].append((overall_delta, datetime.now()))
+            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
+                                                      psutil.virtual_memory().percent))

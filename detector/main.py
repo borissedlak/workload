@@ -19,7 +19,7 @@ chain_2 = privacy_model_2.getChainForSource("video", "webcam")
 chain_3 = privacy_model_3.getChainForSource("video", "webcam")
 chain_4 = privacy_model_4.getChainForSource("video", "webcam")
 
-detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stats=True)
+detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stats=True, simulate_fps=True)
 detector_1_1 = VideoDetector(privacy_chain=chain_1_1, display_stats=True, write_stats=True)
 detector_1_50 = VideoDetector(privacy_chain=chain_1_50, display_stats=True, write_stats=True)
 detector_2 = VideoDetector(privacy_chain=chain_2, display_stats=True, write_stats=True)
@@ -30,7 +30,11 @@ detector_4 = VideoDetector(privacy_chain=chain_4, display_stats=True, write_stat
 # detector_1_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1_1", show_result=True)
 # detector_1_50.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1_50", show_result=True)
 
-detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_loop_1", model_name="model_1", show_result=False)
+detector_1.processVideo(video_path="../producer/demo_files/videos/",
+                        video_info=[("360p", 30), ("720p", 16), ("720p", 30), ("720p", 45), ("720p", 60)],
+                        model_name="model_1", show_result=False)
+# detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1", show_result=False)
+# detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_loop_1", model_name="model_1", show_result=False)
 # detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_2", show_result=True)
 # detector_3.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_3", show_result=True)
 # detector_4.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_4", show_result=True)

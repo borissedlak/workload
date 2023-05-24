@@ -52,12 +52,12 @@ class Cyclical_Array:
 
 
 def diffAsStringInMS(a: datetime, b: datetime):
-    return str(int((a - b).microseconds / 1000))
+    return int((a - b).microseconds / 1000)
 
 
 def printExecutionTime(name: str, a: datetime, b: datetime):
     if a is not None and b is not None:
-        print(f' {name} took {diffAsStringInMS(a, b)}ms')
+        # print(f' {name} took {diffAsStringInMS(a, b)}ms')
         return diffAsStringInMS(a, b)
     return 0
 
@@ -66,12 +66,21 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
-        f.write('execution_time,timestamp\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage, cpu_temperature,pixel,fps\n')
 
-        for (t, delta, cpu, memory) in write_store[function_name]:
-            f.write(f'{t},{delta},{cpu},{memory}\n')
+        for (t, delta, cpu, memory, celsius, pixel, fps) in write_store[function_name]:
+            f.write(f'{t},{delta},{cpu},{memory},{celsius},{pixel},{fps}\n')
 
         f.close()
+
+
+def get_cpu_temperature():
+    temperature = None
+    with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+        temp_str = f.read().strip()
+        if temp_str.isdigit():
+            temperature = float(temp_str) / 1000.0
+    return temperature
 
 
 def getTupleFromStats(consumer_stats: RTCStatsReport):

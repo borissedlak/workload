@@ -10,7 +10,6 @@ import util
 from ModelParser import PrivacyChain
 from util import printExecutionTime, write_execution_times
 import psutil
-from gpiozero import CPUTemperature
 
 
 class VideoDetector:
@@ -80,9 +79,11 @@ class VideoDetector:
                 if self.img is not None:
                     self.img = imutils.resize(self.img, width=self.output_width)
                     # (self.height, self.width) = self.img.shape[:2]
-                    overall_time = int((datetime.now() - start_time).microseconds / 1000)
-                    if overall_time < available_time_frame:
-                        time.sleep((available_time_frame - overall_time) / 1000)
+
+                    if self.simulate_fps:
+                        overall_time = int((datetime.now() - start_time).microseconds / 1000)
+                        if overall_time < available_time_frame:
+                            time.sleep((available_time_frame - overall_time) / 1000)
 
             cap.release()
             fps.stop()
@@ -96,6 +97,7 @@ class VideoDetector:
         boxes = None
 
         overall_time = None
+        detected = False
         if self.display_stats:
             overall_time = datetime.now()
 
@@ -109,6 +111,12 @@ class VideoDetector:
             if cmA.isTrigger():
                 args_with_boxes = cmA.args | {'boxes': boxes}
                 self.img, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)
+
+                if boxes is None or boxes.size == 0:
+                    detected = False
+                else:
+                    detected = True
+
             if cmA.isTransformation():
                 args_with_boxes = cmA.args | {'boxes': boxes}
                 self.img = cmA.commandFunction.transform(self.img, options=args_with_boxes)
@@ -133,4 +141,4 @@ class VideoDetector:
             celsius = util.get_cpu_temperature()
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
                                                       psutil.virtual_memory().percent, celsius,
-                                                      self.resolution, fps))
+                                                      self.resolution, fps, detected))

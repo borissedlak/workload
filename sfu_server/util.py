@@ -66,10 +66,10 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
-        f.write('execution_time,timestamp,cpu_utilization,memory_usage, cpu_temperature,pixel,fps\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage,cpu_temperature,pixel,fps,bitrate,success,within_time\n')
 
-        for (t, delta, cpu, memory, celsius, pixel, fps) in write_store[function_name]:
-            f.write(f'{t},{delta},{cpu},{memory},{celsius},{pixel},{fps}\n')
+        for (delta, ts, cpu, memory, celsius, pixel, fps, detected) in write_store[function_name]:
+            f.write(f'{delta},{ts},{cpu},{memory},{celsius},{pixel},{fps},{pixel * fps},{detected},{delta <= (1000 / fps)}\n')
 
         f.close()
 

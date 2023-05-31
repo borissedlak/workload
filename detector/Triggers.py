@@ -24,12 +24,12 @@ class Trigger_Function(metaclass=ABCMeta):
 
 class Face_Trigger(Trigger_Function):
     function_name = 'Face_Trigger'
-    face_detector_onnx = join(dirname(__file__), "models/version-RFB-320.onnx")
+    face_detector_onnx = join(dirname(__file__), "models/version-RFB-640.onnx")
     face_detector = ort.InferenceSession(face_detector_onnx, providers=['CPUExecutionProvider'])
 
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
         _image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        _image = cv2.resize(_image, (320, 240))
+        _image = cv2.resize(_image, (640, 480))
         image_mean = np.array([127, 127, 127])
         _image = (_image - image_mean) / 128
         _image = np.transpose(_image, [2, 0, 1])

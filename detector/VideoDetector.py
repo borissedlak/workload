@@ -62,6 +62,7 @@ class VideoDetector:
             (success, self.img) = cap.read()
             self.img = imutils.resize(self.img, width=self.output_width)
             self.resolution = self.img.shape[0] * self.img.shape[1]
+            self.old_center = (self.img.shape[1] / 2, self.img.shape[0] / 2)
             # (self.height, self.width) = self.img.shape[:2]
 
             fps = FPS().start()
@@ -146,4 +147,5 @@ class VideoDetector:
             # celsius = util.get_cpu_temperature()
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
                                                       psutil.virtual_memory().percent,
-                                                      self.resolution, fps, detected, self.distance))
+                                                      self.resolution, fps, detected, self.distance,
+                                                      util.get_consumption()))

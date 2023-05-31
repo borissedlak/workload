@@ -67,10 +67,10 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
-        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,bitrate,success,within_time,distance\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,bitrate,success,within_time,distance,consumption\n')
 
-        for (delta, ts, cpu, memory, pixel, fps, detected, distance) in write_store[function_name]:
-            f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{pixel * fps},{detected},{delta <= (1000 / fps)},{distance}\n')
+        for (delta, ts, cpu, memory, pixel, fps, detected, distance,consumption) in write_store[function_name]:
+            f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{pixel * fps},{detected},{delta <= (1000 / fps)},{distance},{consumption}\n')
 
         f.close()
 
@@ -104,3 +104,14 @@ def getTupleFromStats(consumer_stats: RTCStatsReport):
     rtt = round(stat_list[0].roundTripTime, 4)
     timestamp = stat_list[0].timestamp
     return rtt, timestamp
+
+def write_to_blank_file(text):
+    f = open(f'../mqtt_client/cons.txt', 'w')
+    f.write(f"{text}")
+    f.close()
+
+def get_consumption(file ='../mqtt_client/cons.txt'):
+    f = open(f'../mqtt_client/cons.txt', 'r')
+    t = f.read()
+    f.close()
+    return int(t)

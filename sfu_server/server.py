@@ -236,7 +236,7 @@ if __name__ == "__main__":
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
-    app.router.add_get("/client.js", javascript)
+    app.router.add_get("/client.py.js", javascript)
     app.router.add_post('/provide', provide)
     app.router.add_post("/consume", consume)
     app.router.add_get("/calculate_stats", calculate_stats)

@@ -135,7 +135,7 @@ if __name__ == '__main__':
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
 
-    app.router.add_post('/client', client_sdp)
+    app.router.add_post('/client.py', client_sdp)
     # app.router.add_post('/listener', listener_sdp)
 
     # cors = aiohttp_cors.setup(app, defaults={

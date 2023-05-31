@@ -1,3 +1,4 @@
+import math
 import sys
 import time
 from datetime import datetime
@@ -66,13 +67,28 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../evaluation/csv_export/function_time/{video_name}/{model_name}/{function_name}.csv', 'w+')
-        f.write('execution_time,timestamp,cpu_utilization,memory_usage,cpu_temperature,pixel,fps,bitrate,success,within_time\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,bitrate,success,within_time,distance\n')
 
-        for (delta, ts, cpu, memory, celsius, pixel, fps, detected) in write_store[function_name]:
-            f.write(f'{delta},{ts},{cpu},{memory},{celsius},{pixel},{fps},{pixel * fps},{detected},{delta <= (1000 / fps)}\n')
+        for (delta, ts, cpu, memory, pixel, fps, detected, distance) in write_store[function_name]:
+            f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{pixel * fps},{detected},{delta <= (1000 / fps)},{distance}\n')
 
         f.close()
 
+def get_center_from_box(box):
+    x1, y1, x2, y2 = box
+
+    center_x = (x1 + x2) / 2
+    center_y = (y1 + y2) / 2
+
+    return center_x, center_y
+
+def get_relative_distance_between_points(p1,p2,img):
+
+    p1_x, p1_y = p1
+    p2_x, p2_y = p2
+
+    # The intention was to get the relative distance in different resolutions. The results match quite, but are a bit off
+    return math.ceil(math.sqrt(((p1_x - p2_x)/img.shape[1])**2 + ((p1_y - p2_y)/img.shape[0])**2) * 1000)
 
 def get_cpu_temperature():
     temperature = None

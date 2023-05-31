@@ -24,6 +24,8 @@ class VideoDetector:
         self.write_store = None
         self.resolution = 0
         self.simulate_fps = simulate_fps
+        self.old_center = (0, 0)
+        self.distance = 0
 
     def processImage(self, img_path=None, img=None, show_result=False):
         if img_path is not None:
@@ -116,6 +118,9 @@ class VideoDetector:
                     detected = False
                 else:
                     detected = True
+                    new_center = util.get_center_from_box(boxes[0])
+                    self.distance = util.get_relative_distance_between_points(new_center, self.old_center, self.img)
+                    self.old_center = new_center
 
             if cmA.isTransformation():
                 args_with_boxes = cmA.args | {'boxes': boxes}
@@ -138,7 +143,7 @@ class VideoDetector:
         if self.write_stats:
             overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
             # unfortunately this seems to slow down the FPS decisively, however, the execution time (delay) stays the same
-            celsius = util.get_cpu_temperature()
+            # celsius = util.get_cpu_temperature()
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
-                                                      psutil.virtual_memory().percent, celsius,
-                                                      self.resolution, fps, detected))
+                                                      psutil.virtual_memory().percent,
+                                                      self.resolution, fps, detected, self.distance))

@@ -117,7 +117,7 @@ def get_consumption(file ='../mqtt_client/cons.txt'):
     f = open(f'./cons.txt', 'r')
     t = f.read()
     f.close()
-    return int(t)
+    return t
 
 def upload_file():
     # The API endpoint to communicate with

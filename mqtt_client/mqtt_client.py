@@ -1,5 +1,4 @@
 import json
-import time
 
 import paho.mqtt.client as mqtt
 
@@ -28,24 +27,25 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection")
 
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-client.on_disconnect = on_disconnect
+def setup():
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.on_disconnect = on_disconnect
 
-broker_address = "192.168.18.145"
-port = 1883  # Default MQTT port
-client.connect(broker_address, port=port)
+    broker_address = "192.168.1.153"
+    port = 1883  # Default MQTT port
+    client.connect(broker_address, port=port)
 
-client.loop_start()
+    client.loop_start()
 
-# Run the network loop indefinitely
-while True:
-    time.sleep(999999999)
+    # Run the network loop indefinitely
+    # while True:
+    #     time.sleep(999999999)
 
-# Or run the network loop for a specific duration (e.g., 10 seconds)
-# import time
-# time.sleep(10)
+    # Or run the network loop for a specific duration (e.g., 10 seconds)
+    # import time
+    # time.sleep(10)
 
-# Stop the network loop
-client.loop_stop()
+    # Stop the network loop
+    # client.loop_stop()

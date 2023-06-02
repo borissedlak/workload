@@ -47,51 +47,52 @@ class VideoDetector:
             cv2.imshow("output", self.img)
             cv2.waitKey(0)
 
-    def processVideo(self, video_path, video_info, model_name, show_result=False):
+    def processVideo(self, video_path, video_info, model_name, show_result=False, repeat=1):
 
         if self.write_stats:
             self.write_store = {"Overall_Chain": []}
 
         for (source_res, source_fps) in video_info:
-            print(f"Now processing: {source_res}{source_fps}")
-            available_time_frame = (1000 / source_fps)
-            cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
-            if not cap.isOpened():
-                print("Error opening video ...")
-                return
-            (success, self.img) = cap.read()
-            self.img = imutils.resize(self.img, width=self.output_width)
-            self.resolution = self.img.shape[0] * self.img.shape[1]
-            self.old_center = (self.img.shape[1] / 2, self.img.shape[0] / 2)
-            # (self.height, self.width) = self.img.shape[:2]
-
-            fps = FPS().start()
-
-            while success:
-                start_time = datetime.now()
-                self.processFrame_v3(source_fps)
-                # if show_result:
-                #     cv2.imshow("output", self.img)
-                #
-                # key = cv2.waitKey(1) & 0xFF
-                # if key == ord("q"):
-                #     break
-
-                fps.update()
+            for x in range(repeat):
+                print(f"Now processing: {source_res}{source_fps} Round {x+1}")
+                available_time_frame = (1000 / source_fps)
+                cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
+                if not cap.isOpened():
+                    print("Error opening video ...")
+                    return
                 (success, self.img) = cap.read()
-                if self.img is not None:
-                    self.img = imutils.resize(self.img, width=self.output_width)
-                    # (self.height, self.width) = self.img.shape[:2]
+                self.img = imutils.resize(self.img, width=self.output_width)
+                self.resolution = self.img.shape[0] * self.img.shape[1]
+                self.old_center = (self.img.shape[1] / 2, self.img.shape[0] / 2)
+                # (self.height, self.width) = self.img.shape[:2]
 
-                    if self.simulate_fps:
-                        overall_time = int((datetime.now() - start_time).microseconds / 1000)
-                        if overall_time < available_time_frame:
-                            time.sleep((available_time_frame - overall_time) / 1000)
+                fps = FPS().start()
 
-            cap.release()
-            fps.stop()
-            print("Elapsed time: {:.2f}s".format(fps.elapsed()))
-            print("FPS: {:.2f}".format(fps.fps()))
+                while success:
+                    start_time = datetime.now()
+                    self.processFrame_v3(source_fps)
+                    # if show_result:
+                    #     cv2.imshow("output", self.img)
+                    #
+                    # key = cv2.waitKey(1) & 0xFF
+                    # if key == ord("q"):
+                    #     break
+
+                    fps.update()
+                    (success, self.img) = cap.read()
+                    if self.img is not None:
+                        self.img = imutils.resize(self.img, width=self.output_width)
+                        # (self.height, self.width) = self.img.shape[:2]
+
+                        if self.simulate_fps:
+                            overall_time = int((datetime.now() - start_time).microseconds / 1000)
+                            if overall_time < available_time_frame:
+                                time.sleep((available_time_frame - overall_time) / 1000)
+
+                cap.release()
+                fps.stop()
+                print("Elapsed time: {:.2f}s".format(fps.elapsed()))
+                print("FPS: {:.2f}".format(fps.fps()))
 
         if self.write_stats:
             write_execution_times(self.write_store, "video_loop_1", model_name)

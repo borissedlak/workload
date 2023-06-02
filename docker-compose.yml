@@ -1,8 +1,14 @@
 version: '3'
 services:
-  sfu:
-    image: basta55/sfu
+  evaluation:
+    build:
+      context: ./
+      dockerfile: Dockerfile
     ports:
       - "4000:4000"
+    volumes:
+      - type: bind
+        source: $HOME/data/
+        target: /src/data
     environment:
-      - privacy-model = blabla
+      - privacy-model=blabla

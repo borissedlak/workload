@@ -13,10 +13,13 @@ COPY requirements.txt /src/
 COPY sfu_server /src/
 COPY model /src/
 COPY detector /src/
+COPY video_data /video_data/
+COPY data /data/
 
 # install dependencies
 RUN pip install -r requirements.txt
 
+#VOLUME /src/data
 
 # command to run on container start
-CMD [ "python", "./server.py" ]
+CMD [ "python", "./main.py" ]

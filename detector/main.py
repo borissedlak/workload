@@ -75,13 +75,13 @@ detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stat
 # ("100p", 16), ("120p", 16), ("240p", 16), ("360p", 16), ("480p", 16), ("720p", 16),
 #                                     ("360p", 30), ("360p", 45), ("360p", 60), ("480p", 30), ("480p", 45), ("480p", 60)
 
-# detector_1.processVideo(video_path="../video_data/",
-#                         video_info=list(
-#                             itertools.product(["120p", "180p", "240p", "360p", "480p", "720p"], [12, 16, 20, 26, 30])),
-#                         model_name="model_1", show_result=False, repeat=10)
 detector_1.processVideo(video_path="../video_data/",
-                        video_info=[("720p", 30)],
-                        model_name="model_1", show_result=False)
+                        video_info=list(
+                            itertools.product(["120p", "180p", "240p", "360p", "480p", "720p"], [12, 16, 20, 26, 30])),
+                        model_name="model_1", show_result=False, repeat=10)
+# detector_1.processVideo(video_path="../video_data/",
+#                         video_info=[("720p", 30)],
+#                         model_name="model_1", show_result=False)
 # detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_1", show_result=False)
 # detector_1.processVideo(video_path="../producer/demo_files/videos/", video_name="video_loop_1", model_name="model_1", show_result=False)
 # detector_2.processVideo(video_path="../producer/demo_files/videos/", video_name="video_1", model_name="model_2", show_result=True)

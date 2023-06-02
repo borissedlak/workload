@@ -1,17 +1,16 @@
 opencv-python==4.7.0.72
 numpy~=1.24.3
-# onnxruntime~=1.15.0
-onnxruntime-gpu~=1.15.0
+onnxruntime~=1.15.0
+# onnxruntime-gpu~=1.15.0
 av~=10.0.0
 imutils~=0.5.4
 requests==2.31.0
-aiohttp~=3.8.1
-aiortc~=1.5.0
-matplotlib==3.7.1
-pandas~=1.5.3
+# aiohttp~=3.8.1
+# aiortc~=1.5.0
+# matplotlib==3.7.1
+# pandas~=1.5.3
 # PyAudio~=0.2.11
 # webrtcvad~=2.0.10
 psutil~=5.9.5
-seaborn~=0.12.2
+# seaborn~=0.12.2
 paho-mqtt~=1.6.1
-pysmb~=1.2.9.1

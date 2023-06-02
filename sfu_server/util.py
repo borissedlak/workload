@@ -4,7 +4,6 @@ from datetime import datetime
 
 import numpy as np
 import requests
-from aiortc import RTCStatsReport, RTCRemoteInboundRtpStreamStats
 
 
 def cropFrameToBoxArea(frame, box):
@@ -103,11 +102,11 @@ def get_cpu_temperature():
     return temperature
 
 
-def getTupleFromStats(consumer_stats: RTCStatsReport):
-    stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
-    rtt = round(stat_list[0].roundTripTime, 4)
-    timestamp = stat_list[0].timestamp
-    return rtt, timestamp
+# def getTupleFromStats(consumer_stats: RTCStatsReport):
+#     stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
+#     rtt = round(stat_list[0].roundTripTime, 4)
+#     timestamp = stat_list[0].timestamp
+#     return rtt, timestamp
 
 def write_to_blank_file(text):
     f = open(f'./cons.txt', 'w')

@@ -25,7 +25,7 @@ class Trigger_Function(metaclass=ABCMeta):
 class Face_Trigger(Trigger_Function):
     function_name = 'Face_Trigger'
     face_detector_onnx = join(dirname(__file__), "models/version-RFB-320.onnx")
-    face_detector = ort.InferenceSession(face_detector_onnx, providers=['CudaExecutionProvider'])
+    face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
         _image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -46,7 +46,7 @@ class Face_Trigger(Trigger_Function):
 class Age_Trigger(Trigger_Function):
     function_name = 'Age_Trigger'
     age_classifier_onnx = join(dirname(__file__), "models/age_googlenet.onnx")
-    age_classifier = ort.InferenceSession(age_classifier_onnx, providers=['CudaExecutionProvider'])
+    age_classifier = ort.InferenceSession(age_classifier_onnx, providers=['CUDAExecutionProvider'])
     ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 
     def check(self, frame, options=None):
@@ -82,7 +82,7 @@ class Gender_Trigger(Trigger_Function):
     function_name = 'Gender_Trigger'
 
     gender_classifier_onnx = join(dirname(__file__), "models/gender_googlenet.onnx")
-    gender_classifier = ort.InferenceSession(gender_classifier_onnx, providers=['CudaExecutionProvider'])
+    gender_classifier = ort.InferenceSession(gender_classifier_onnx, providers=['CUDAExecutionProvider'])
     genderList = ['Male', 'Female']
 
     def check(self, frame, options=None):
@@ -121,7 +121,7 @@ class Gender_Trigger(Trigger_Function):
 class Car_Plate_Trigger(Trigger_Function):
     function_name = 'Car_Plate_Trigger'
     face_detector_onnx = join(dirname(__file__), "models/az_plate_ssdmobilenetv1.onnx")
-    face_detector = ort.InferenceSession(face_detector_onnx, providers=['CudaExecutionProvider'])
+    face_detector = ort.InferenceSession(face_detector_onnx, providers=['CUDAExecutionProvider'])
 
     def check(self, frame, options=None) -> Tuple[Frame, np.ndarray]:
         _image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

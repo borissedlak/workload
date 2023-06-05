@@ -1,0 +1,8 @@
+opencv-python==4.7.0.72
+numpy~=1.19.5
+# onnxruntime-gpu==1.9.0
+av~=10.0.0
+imutils~=0.5.4
+requests==2.27.0
+psutil~=5.9.5
+paho-mqtt~=1.6.1

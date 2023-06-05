@@ -23,7 +23,7 @@ COPY data /data/
 # install dependencies
 RUN pip install --upgrade pip setuptools wheel
 # RUN pip install ../onnxruntime_gpu-1.6.0-cp36-cp36m-linux_aarch64.whl
-RUN pip install -r requirements369.txt
+RUN pip install -r requirements369.txt --verbose
 
 # command to run on container start
 CMD [ "python", "./main.py" ]

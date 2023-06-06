@@ -1,5 +1,5 @@
 # set base image (host OS)
-FROM python:3.9-slim-buster
+FROM python:3.8-slim-buster
 
 #Local dependencies for cv2
 RUN apt-get update
@@ -19,8 +19,6 @@ COPY data /data/
 
 # install dependencies
 RUN pip install -r requirements.txt
-
-#VOLUME /src/data
 
 # command to run on container start
 CMD [ "python", "./main.py" ]

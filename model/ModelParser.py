@@ -1,4 +1,5 @@
 import ast
+from typing import List
 
 from Transformations import Max_Spec_Resize, Blur_Area_Pixelate, Fill_Area_Box
 from Triggers import Face_Trigger, Age_Trigger, Car_Plate_Trigger, Gender_Trigger
@@ -39,7 +40,7 @@ class CmdWithArgs:
 
 class PrivacyChain:
 
-    def __init__(self, cmA: list[CmdWithArgs]):
+    def __init__(self, cmA: List[CmdWithArgs]):
         self.mediaSource = cmA[0]
         self.cmAs = cmA[1:]
 
@@ -62,7 +63,7 @@ class PrivacyChain:
 
 class PrivacyModel:
 
-    def __init__(self, chains: list[PrivacyChain]):
+    def __init__(self, chains: List[PrivacyChain]):
         self.chains = chains
 
     # If a tag is here, this means that the provider has tagged his stream, and we should try to find a specific model
@@ -83,8 +84,8 @@ class PrivacyModel:
 
 
 def parseModel(s: str):
-    chains: list[PrivacyChain] = []
-    chains_raw: list[str] = s.splitlines()
+    chains: List[PrivacyChain] = []
+    chains_raw: List[str] = s.splitlines()
 
     for c in chains_raw:
 

@@ -1,13 +1,11 @@
 # set base image (host OS)
-FROM python:3.6.9-slim-buster
+FROM python:3.8-slim-buster
 
 #Local dependencies for cv2
 RUN apt-get update
-RUN apt-get install build-essential python3-dev pkg-config wget -y
-RUN apt-get install -y \
-    libavformat-dev libavcodec-dev libavdevice-dev \
-    libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
-RUN wget https://nvidia.box.com/shared/static/49fzcqa1g4oblwxr3ikmuvhuaprqyxb7.whl -O onnxruntime_gpu-1.6.0-cp36-cp36m-linux_aarch64.whl
+RUN apt-get install ffmpeg libsm6 libxext6 wget -y
+RUN apt-get install gcc python3-dev -y
+RUN wget https://nvidia.box.com/shared/static/m9bz827ljmn771kvkjksdchmkczt3xke.whl -O onnxruntime_gpu-1.10.0-cp38-cp38-linux_aarch64.whl
 
 # set the working directory in the container
 WORKDIR /src/
@@ -21,9 +19,10 @@ COPY video_data /video_data/
 COPY data /data/
 
 # install dependencies
-RUN pip install --upgrade pip setuptools wheel
-# RUN pip install ../onnxruntime_gpu-1.6.0-cp36-cp36m-linux_aarch64.whl
-RUN pip install -r requirements369.txt --verbose
+# what if any of these packages are not made for arm64???
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install ../onnxruntime_gpu-1.10.0-cp38-cp38-linux_aarch64.whl
+RUN pip3 install -r requirements369.txt --verbose
 
 # command to run on container start
 CMD [ "python", "./main.py" ]

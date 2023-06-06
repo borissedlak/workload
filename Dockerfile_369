@@ -5,7 +5,7 @@ FROM python:3.8-slim-buster
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6 wget -y
 RUN apt-get install gcc python3-dev -y
-RUN wget https://nvidia.box.com/shared/static/m9bz827ljmn771kvkjksdchmkczt3xke.whl -O onnxruntime_gpu-1.10.0-cp38-cp38-linux_aarch64.whl
+RUN wget https://nvidia.box.com/shared/static/kdgonq5ohz5g6gq8lw3kkxpo7y1uuldc.whl -O onnxruntime_gpu-1.9.0-cp38-cp38-linux_aarch64.whl
 
 # set the working directory in the container
 WORKDIR /src/
@@ -21,7 +21,7 @@ COPY data /data/
 # install dependencies
 # what if any of these packages are not made for arm64???
 RUN pip3 install --upgrade pip setuptools wheel
-RUN pip3 install ../onnxruntime_gpu-1.10.0-cp38-cp38-linux_aarch64.whl
+RUN pip3 install ../onnxruntime_gpu-1.9.0-cp38-cp38-linux_aarch64.whl
 RUN pip3 install -r requirements369.txt --verbose
 
 # command to run on container start

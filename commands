@@ -1,0 +1,55 @@
+ffmpeg -ss 00:00:00 -to 00:00:10 -i original.mp4 -c copy original_cut.mp4
+
+ffmpeg -i original_cut.mp4 -filter:v scale=-1:720 -c:a copy 720p_30.mp4
+ffmpeg -i original_cut.mp4 -filter:v scale=854:480 -c:a copy 480p_30.mp4
+ffmpeg -i original_cut.mp4 -filter:v scale=-1:360 -c:a copy 360p_30.mp4
+ffmpeg -i original_cut.mp4 -filter:v scale=426:240 -c:a copy 240p_30.mp4
+ffmpeg -i original_cut.mp4 -filter:v scale=-1:180 -c:a copy 180p_30.mp4
+ffmpeg -i original_cut.mp4 -filter:v scale=212:120 -c:a copy 120p_30.mp4
+
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 26 720p_26.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 20 720p_20.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 16 720p_16.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 12 720p_12.mp4
+
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 26 480p_26.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 20 480p_20.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 16 480p_16.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 12 480p_12.mp4
+
+ffmpeg -y -i 360p_30.mp4 -vf "setpts=PTS" -r 26 360p_26.mp4
+ffmpeg -y -i 360p_30.mp4 -vf "setpts=PTS" -r 20 360p_20.mp4
+ffmpeg -y -i 360p_30.mp4 -vf "setpts=PTS" -r 16 360p_16.mp4
+ffmpeg -y -i 360p_30.mp4 -vf "setpts=PTS" -r 12 360p_12.mp4
+
+ffmpeg -y -i 240p_30.mp4 -vf "setpts=PTS" -r 26 240p_26.mp4
+ffmpeg -y -i 240p_30.mp4 -vf "setpts=PTS" -r 20 240p_20.mp4
+ffmpeg -y -i 240p_30.mp4 -vf "setpts=PTS" -r 16 240p_16.mp4
+ffmpeg -y -i 240p_30.mp4 -vf "setpts=PTS" -r 12 240p_12.mp4
+
+ffmpeg -y -i 180p_30.mp4 -vf "setpts=PTS" -r 26 180p_26.mp4
+ffmpeg -y -i 180p_30.mp4 -vf "setpts=PTS" -r 20 180p_20.mp4
+ffmpeg -y -i 180p_30.mp4 -vf "setpts=PTS" -r 16 180p_16.mp4
+ffmpeg -y -i 180p_30.mp4 -vf "setpts=PTS" -r 12 180p_12.mp4
+
+ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 26 120p_26.mp4
+ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 20 120p_20.mp4
+ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 16 120p_16.mp4
+ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 12 120p_12.mp4
+
+
+sudo service mosquitto stop
+mosquitto -c mosquitto.conf
+http://delock-3259.local/
+
+
+docker buildx build -t basta55/workload --platform linux/arm64 --load .
+docker buildx build -t basta55/workload-gpu:latest -f ./Dockerfile_369 --platform linux/arm64 --load .
+docker cp eloquent_davinci:/data/ $HOME/
+
+120p = 25440
+180p = 57600
+240p = 102240
+360p = 230400
+480p = 409920
+720p = 921600

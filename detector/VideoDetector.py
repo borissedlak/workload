@@ -1,4 +1,6 @@
 # from https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
+import math
+import random
 import time
 from datetime import datetime
 
@@ -52,9 +54,15 @@ class VideoDetector:
         if self.write_stats:
             self.write_store = {"Overall_Chain": []}
 
+        # penalty_factor = [1] + [-1] * (repeat - 1)
         for (source_res, source_fps) in video_info:
+            # penalty_factor = round(1 + ((source_fps / 3) ** 2) / 100, 2)
             for x in range(repeat):
-                print(f"Now processing: {source_res}{source_fps} Round {x+1}")
+
+                # if x > 0 and penalty_factor[x] == -1:
+                #     penalty_factor[x] = round(penalty_factor[x-1] + random.randint(0, 6) / 100, 2)
+
+                print(f"Now processing: {source_res}{source_fps} Round {x+1}") #PenaltyFactor {penalty_factor}")
                 available_time_frame = (1000 / source_fps)
                 cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
                 if not cap.isOpened():
@@ -97,7 +105,7 @@ class VideoDetector:
         if self.write_stats:
             write_execution_times(self.write_store, "video_loop_1", model_name)
 
-    def processFrame_v3(self, fps=None):
+    def processFrame_v3(self, fps=None, penalty=1):
         boxes = None
 
         overall_time = None
@@ -150,5 +158,6 @@ class VideoDetector:
             # Celsius = util.get_cpu_temperature()
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
                                                       psutil.virtual_memory().percent,
-                                                      self.resolution, fps, detected, self.distance,
-                                                      util.get_consumption()))
+                                                      self.resolution, fps, detected, self.distance
+                                                      # util.get_consumption()
+                                                      ))

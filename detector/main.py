@@ -40,10 +40,10 @@ def setup():
     client.loop_start()
 
 
-process = multiprocessing.Process(target=setup())
-# process.start()
-process.run()
-time.sleep(0.1)
+# process = multiprocessing.Process(target=setup())
+# # process.start()
+# process.run()
+# time.sleep(0.1)
 
 # privacy_model = ModelParser.parseModel("video:{'tag':'recording'}-->Gender_Trigger:{'prob':0.85}-->Blur_Area_Simple:{'blocks':5}")
 privacy_model_1 = ModelParser.parseModel(Models.model_1)
@@ -76,7 +76,7 @@ detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stat
 
 detector_1.processVideo(video_path="../video_data/",
                         video_info=list(
-                            itertools.product(["120p", "180p", "240p", "360p", "480p", "720p"], [12, 16, 20, 26, 30])),
+                            itertools.product(["480p"], [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])),
                         model_name="model_1", show_result=False, repeat=10)
 # detector_1.processVideo(video_path="../video_data/",
 #                         video_info=[("720p", 30)],

@@ -1,9 +1,11 @@
+import math
 import sys
 import time
 from datetime import datetime
 
 import numpy as np
 import requests
+from aiortc import RTCStatsReport, RTCRemoteInboundRtpStreamStats
 
 
 def cropFrameToBoxArea(frame, box):
@@ -66,15 +68,16 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../data/Performance.csv', 'w+')
-        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance\n')
 
-        for (delta, ts, cpu, memory, pixel, fps, detected, distance, consumption) in write_store[function_name]:
-            f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance},{consumption}\n')
+        for (delta, ts, cpu, memory, pixel, fps, detected, distance) in write_store[function_name]:
+            print(delta, cpu, fps, math.ceil(delta * (1 + cpu / 100) ** 6))
+            f.write(f'{math.ceil(delta * (1 + cpu / 100) ** 6)},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance}\n')
 
         f.close()
         print("Performance file exported")
 
-        upload_file()
+        # upload_file()
 
 
 def get_center_from_box(box):
@@ -105,11 +108,11 @@ def get_cpu_temperature():
     return temperature
 
 
-# def getTupleFromStats(consumer_stats: RTCStatsReport):
-#     stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
-#     rtt = round(stat_list[0].roundTripTime, 4)
-#     timestamp = stat_list[0].timestamp
-#     return rtt, timestamp
+def getTupleFromStats(consumer_stats: RTCStatsReport):
+    stat_list = list(filter(lambda x: isinstance(x, RTCRemoteInboundRtpStreamStats), list(consumer_stats.values())))
+    rtt = round(stat_list[0].roundTripTime, 4)
+    timestamp = stat_list[0].timestamp
+    return rtt, timestamp
 
 def write_to_blank_file(text):
     f = open(f'./cons.txt', 'w')

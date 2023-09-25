@@ -68,11 +68,11 @@ def write_execution_times(write_store, video_name, model_name):
     for function_name in write_store.keys():
 
         f = open(f'../data/Performance.csv', 'w+')
-        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance\n')
+        f.write('execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,stream_count\n')
 
-        for (delta, ts, cpu, memory, pixel, fps, detected, distance) in write_store[function_name]:
-            print(delta, cpu, fps, math.ceil(delta * (1 + cpu / 100) ** 6))
-            f.write(f'{math.ceil(delta * (1 + cpu / 100) ** 6)},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance}\n')
+        for (delta, ts, cpu, memory, pixel, fps, detected, distance, thread_number) in write_store[function_name]:
+            # print(delta, cpu, fps, math.ceil(delta * (1 + cpu / 100) ** 6))
+            f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance},{thread_number}\n')
 
         f.close()
         print("Performance file exported")
@@ -89,6 +89,7 @@ def get_center_from_box(box):
     return center_x, center_y
 
 
+# TODO: Maybe revert and simply take the absolute pixel distance and find some use case where this matches
 def get_relative_distance_between_points(p1, p2, img):
     p1_x, p1_y = p1
     p2_x, p2_y = p2

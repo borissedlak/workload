@@ -1,17 +1,17 @@
 # from https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
-import math
-import random
+import threading
 import time
 from datetime import datetime
 
 import cv2
 import imutils
+import psutil
 from imutils.video import FPS
 
 import util
+import ModelParser
 from ModelParser import PrivacyChain
 from util import printExecutionTime, write_execution_times
-import psutil
 
 
 class VideoDetector:
@@ -55,14 +55,15 @@ class VideoDetector:
             self.write_store = {"Overall_Chain": []}
 
         # penalty_factor = [1] + [-1] * (repeat - 1)
-        for (source_res, source_fps) in video_info:
+        for (source_res, source_fps, number_threads) in video_info:
             # penalty_factor = round(1 + ((source_fps / 3) ** 2) / 100, 2)
             for x in range(repeat):
 
                 # if x > 0 and penalty_factor[x] == -1:
                 #     penalty_factor[x] = round(penalty_factor[x-1] + random.randint(0, 6) / 100, 2)
 
-                print(f"Now processing: {source_res}{source_fps} Round {x+1}") #PenaltyFactor {penalty_factor}")
+                print(
+                    f"Now processing: {source_res}{source_fps} Round {x + 1} with {number_threads} Thread(s)")
                 available_time_frame = (1000 / source_fps)
                 cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
                 if not cap.isOpened():
@@ -78,9 +79,21 @@ class VideoDetector:
 
                 while success:
                     start_time = datetime.now()
+
+                    # TODO: The distance must be the same for all frames in the log, instead of 0
+                    threads = []
+                    for _ in range(number_threads):
+                        thread = threading.Thread(target=self.processFrame_v3, args=(source_fps, number_threads))
+                        threads.append(thread)
+                        thread.start()
+                    for thread in threads:
+                        thread.join()
+
                     self.processFrame_v3(source_fps)
-                    # if show_result:
-                    #     cv2.imshow("output", self.img)
+                    if show_result:
+                        cv2.imshow("output", self.img)
+                        cv2.waitKey(1)
+                        cv2.destroyAllWindows()
                     #
                     # key = cv2.waitKey(1) & 0xFF
                     # if key == ord("q"):
@@ -105,7 +118,8 @@ class VideoDetector:
         if self.write_stats:
             write_execution_times(self.write_store, "video_loop_1", model_name)
 
-    def processFrame_v3(self, fps=None, penalty=1):
+    # TODO: The solution to have one distance for all should be to pass the
+    def processFrame_v3(self, fps=None, number_threads=1):
         boxes = None
 
         overall_time = None
@@ -141,23 +155,11 @@ class VideoDetector:
 
             delta = printExecutionTime(function_name, datetime.now(), start_time)
 
-            # if self.write_stats:
-            #     if function_name in self.write_store:
-            #         self.write_store[function_name].append((delta, datetime.now(), 0, 0, 0, 0,0))
-            #     else:
-            #         self.write_store[function_name] = []
-            #         self.write_store[function_name].append((delta, datetime.now(), 0, 0, 0, 0,0))
-
-            # if self.simulate_fps:
-            #     if delta < time_frame:
-            #         time.sleep((time_frame - delta) / 1000)
-
         if self.write_stats:
             overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
-            # unfortunately this seems to slow down the FPS decisively, however, the execution time (delay) stays the same
-            # Celsius = util.get_cpu_temperature()
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
                                                       psutil.virtual_memory().percent,
-                                                      self.resolution, fps, detected, self.distance
+                                                      self.resolution, fps, detected, self.distance,
+                                                      number_threads
                                                       # util.get_consumption()
                                                       ))

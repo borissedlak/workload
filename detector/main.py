@@ -1,6 +1,5 @@
 import itertools
 import json
-import multiprocessing
 import sys
 
 import paho.mqtt.client as mqtt
@@ -17,6 +16,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe('tele/delock/SENSOR')
     else:
         print("Failed to connect, return code: ", rc)
+
+
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     o = json.loads(payload)
@@ -24,9 +25,13 @@ def on_message(client, userdata, msg):
 
     print(f"Current Consumption: {cons}W")
     util.write_to_blank_file(cons)
+
+
 def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection")
+
+
 def setup():
     client = mqtt.Client()
     client.on_connect = on_connect
@@ -76,8 +81,9 @@ detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stat
 
 detector_1.processVideo(video_path="../video_data/",
                         video_info=list(
-                            itertools.product(["480p"], [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])),
-                        model_name="model_1", show_result=False, repeat=10)
+                            itertools.product(["120p", "180p", "240p", "360p", "480p", "720p"], [12, 16, 20, 26, 30],
+                                              [1, 2, 3, 4, 5])),
+                        model_name="model_1", show_result=False, repeat=5)
 # detector_1.processVideo(video_path="../video_data/",
 #                         video_info=[("720p", 30)],
 #                         model_name="model_1", show_result=False)

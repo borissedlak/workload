@@ -1,0 +1,129 @@
+# from https://www.pyimagesearch.com/2020/04/06/blur-and-anonymize-faces-with-opencv-and-python/
+import random
+import threading
+import time
+from datetime import datetime
+
+import cv2
+import imutils
+import psutil
+from imutils.video import FPS
+
+import util
+import ModelParser
+from ModelParser import PrivacyChain
+from util import printExecutionTime, write_execution_times
+
+
+class VideoProcessor:
+    def __init__(self, privacy_chain: PrivacyChain = None, confidence_threshold=0.5,
+                 display_stats=False, write_stats=False, simulate_fps=False):
+        self.img = None
+        self.confidence_threshold = confidence_threshold
+        self.privacy_chain = privacy_chain
+        self.display_stats = display_stats
+        self.write_stats = write_stats
+        self.write_store = None
+        self.resolution = 0
+        self.simulate_fps = simulate_fps
+        self.old_center = (0, 0)
+        self.distance = 0
+
+    def processVideo(self, video_path, video_info, model_name, show_result=False):
+
+        if self.write_stats:
+            self.write_store = {"Overall_Chain": []}
+
+        (source_res, source_fps, number_threads) = video_info
+        print(f"Now processing: {source_res}{source_fps} with {number_threads} Thread(s)")
+
+        available_time_frame = (1000 / source_fps)
+        cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
+        if not cap.isOpened():
+            print("Error opening video ...")
+            return
+
+        skip_x_frames = source_fps * random.randint(0, 9)
+        # start_time = time.time()
+        cap.set(cv2.CAP_PROP_POS_FRAMES, skip_x_frames)
+        # print((time.time() - start_time) * 1000)
+
+        (success, self.img) = cap.read()
+
+        self.resolution = self.img.shape[0] * self.img.shape[1]
+        self.old_center = (self.img.shape[1] / 2, self.img.shape[0] / 2)
+
+        fps = FPS().start()
+
+        for _ in range(source_fps):
+            start_time = datetime.now()
+
+            threads = []
+            for _ in range(number_threads):
+                thread = threading.Thread(target=self.processFrame_v3, args=(source_fps, number_threads))
+                threads.append(thread)
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+            # Adding one CPU Utilization for all entries in the thread
+            cpu = psutil.cpu_percent()
+            last_x_items = list(self.write_store["Overall_Chain"])[-number_threads:]
+            self.write_store["Overall_Chain"] = self.write_store["Overall_Chain"][:-number_threads]
+            for item in last_x_items:
+                i = list(item)
+                i[2] = cpu
+                self.write_store["Overall_Chain"].append(tuple(i))
+
+            fps.update()
+            (success, self.img) = cap.read()
+            if self.img is not None and self.simulate_fps:
+                overall_time = int((datetime.now() - start_time).microseconds / 1000)
+                if overall_time < available_time_frame:
+                    time.sleep((available_time_frame - overall_time) / 1000)
+
+        cap.release()
+        fps.stop()
+        if self.display_stats:
+            print("Elapsed time: {:.2f}s".format(fps.elapsed()))
+            print("FPS: {:.2f}".format(fps.fps()))
+
+        if self.write_stats:
+            write_execution_times(self.write_store, "video_loop_1", model_name)
+
+    def processFrame_v3(self, fps=None, number_threads=1):
+        boxes = None
+        detected = False
+        overall_time = datetime.now()
+
+        for cmA in self.privacy_chain.cmAs:
+
+            if cmA.isTrigger():
+                args_with_boxes = {'boxes': boxes}
+                args_with_boxes.update(cmA.args)
+                _, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)
+
+                if boxes is None or boxes.size == 0:
+                    detected = False
+                else:
+                    detected = True
+                    new_center = util.get_center_from_box(boxes[0])
+                    d = util.get_relative_distance_between_points(new_center, self.old_center, self.img)
+                    if d > 0:
+                        self.distance = d
+                        self.old_center = new_center
+
+            if cmA.isTransformation():
+                args_with_boxes = {'boxes': boxes}
+                args_with_boxes.update(cmA.args)
+                cmA.commandFunction.transform(self.img, options=args_with_boxes)  # self.img =
+                boxes = None
+
+        if self.write_stats:
+            overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
+            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), -1,
+                                                      psutil.virtual_memory().percent,
+                                                      self.resolution, fps, detected, self.distance,
+                                                      number_threads
+                                                      # util.get_consumption()
+                                                      ))

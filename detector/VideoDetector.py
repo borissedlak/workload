@@ -54,33 +54,26 @@ class VideoDetector:
         if self.write_stats:
             self.write_store = {"Overall_Chain": []}
 
-        # penalty_factor = [1] + [-1] * (repeat - 1)
         for (source_res, source_fps, number_threads) in video_info:
-            # penalty_factor = round(1 + ((source_fps / 3) ** 2) / 100, 2)
             for x in range(repeat):
 
-                # if x > 0 and penalty_factor[x] == -1:
-                #     penalty_factor[x] = round(penalty_factor[x-1] + random.randint(0, 6) / 100, 2)
-
-                print(
-                    f"Now processing: {source_res}{source_fps} Round {x + 1} with {number_threads} Thread(s)")
+                print(f"Now processing: {source_res}{source_fps} Round {x + 1} with {number_threads} Thread(s)")
                 available_time_frame = (1000 / source_fps)
                 cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
                 if not cap.isOpened():
                     print("Error opening video ...")
                     return
+
                 (success, self.img) = cap.read()
                 self.img = imutils.resize(self.img, width=self.output_width)
                 self.resolution = self.img.shape[0] * self.img.shape[1]
                 self.old_center = (self.img.shape[1] / 2, self.img.shape[0] / 2)
-                # (self.height, self.width) = self.img.shape[:2]
 
                 fps = FPS().start()
 
                 while success:
                     start_time = datetime.now()
 
-                    # TODO: The distance must be the same for all frames in the log, instead of 0
                     threads = []
                     for _ in range(number_threads):
                         thread = threading.Thread(target=self.processFrame_v3, args=(source_fps, number_threads))
@@ -89,7 +82,16 @@ class VideoDetector:
                     for thread in threads:
                         thread.join()
 
-                    self.processFrame_v3(source_fps)
+                    # Adding one CPU Utilization for all entries in the thread
+                    cpu = psutil.cpu_percent()
+                    last_x_items = list(self.write_store["Overall_Chain"])[-number_threads:]
+                    self.write_store["Overall_Chain"] = self.write_store["Overall_Chain"][:-number_threads]
+                    for item in last_x_items:
+                        i = list(item)
+                        i[2] = cpu
+                        self.write_store["Overall_Chain"].append(tuple(i))
+
+                    # self.processFrame_v3(source_fps)
                     if show_result:
                         cv2.imshow("output", self.img)
                         cv2.waitKey(1)
@@ -118,7 +120,6 @@ class VideoDetector:
         if self.write_stats:
             write_execution_times(self.write_store, "video_loop_1", model_name)
 
-    # TODO: The solution to have one distance for all should be to pass the
     def processFrame_v3(self, fps=None, number_threads=1):
         boxes = None
 
@@ -137,27 +138,29 @@ class VideoDetector:
             if cmA.isTrigger():
                 args_with_boxes = {'boxes': boxes}
                 args_with_boxes.update(cmA.args)
-                self.img, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)
+                _, boxes = cmA.commandFunction.check(self.img, options=args_with_boxes)
 
                 if boxes is None or boxes.size == 0:
                     detected = False
                 else:
                     detected = True
                     new_center = util.get_center_from_box(boxes[0])
-                    self.distance = util.get_relative_distance_between_points(new_center, self.old_center, self.img)
-                    self.old_center = new_center
+                    d = util.get_relative_distance_between_points(new_center, self.old_center, self.img)
+                    if d > 0:
+                        self.distance = d
+                        self.old_center = new_center
 
             if cmA.isTransformation():
                 args_with_boxes = {'boxes': boxes}
                 args_with_boxes.update(cmA.args)
-                self.img = cmA.commandFunction.transform(self.img, options=args_with_boxes)
+                cmA.commandFunction.transform(self.img, options=args_with_boxes)  # self.img =
                 boxes = None
 
             delta = printExecutionTime(function_name, datetime.now(), start_time)
 
         if self.write_stats:
             overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
-            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), psutil.cpu_percent(),
+            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), -1,
                                                       psutil.virtual_memory().percent,
                                                       self.resolution, fps, detected, self.distance,
                                                       number_threads

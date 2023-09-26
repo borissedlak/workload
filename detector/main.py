@@ -4,7 +4,6 @@ import sys
 
 import paho.mqtt.client as mqtt
 
-import ModelParser
 import Models
 from VideoDetector import *
 
@@ -82,7 +81,7 @@ detector_1 = VideoDetector(privacy_chain=chain_1, display_stats=True, write_stat
 detector_1.processVideo(video_path="../video_data/",
                         video_info=list(
                             itertools.product(["120p", "180p", "240p", "360p", "480p", "720p"], [12, 16, 20, 26, 30],
-                                              [1, 2, 3, 4, 5])),
+                                              [1, 2, 3, 4, 5, 6])),
                         model_name="model_1", show_result=False, repeat=5)
 # detector_1.processVideo(video_path="../video_data/",
 #                         video_info=[("720p", 30)],

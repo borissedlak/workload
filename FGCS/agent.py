@@ -1,28 +1,60 @@
-import sys
+import time
 
+import ModelParser
 import Models
+from FGCS.ACI import ACI
 from VideoProcessor import *
 
-privacy_model_1 = ModelParser.parseModel(Models.model_1)
-chain_1 = privacy_model_1.getChainForSource("video", "webcam")
-detector_1 = VideoProcessor(privacy_chain=chain_1, display_stats=False, write_stats=True, simulate_fps=True)
+privacy_model = ModelParser.parseModel(Models.model_1)
+chain = privacy_model.getChainForSource("video", "webcam")
+detector = VideoProcessor(privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-c_pixel = "240p"
-c_fps = 12
+aci = ACI()
+
+pixel_list = ["120p", "180p", "240p", "360p", "480p", "720p"]
+fps_list = [12, 16, 20, 26, 30]
+
+c_pixel = pixel_list[0]
+c_fps = fps_list[0]
 c_mode = None
 
 d_threads = 1
+new_data = False
 
 
 # Function for the background loop
 def processing_loop():
+    global c_pixel, c_fps, new_data
     while True:
-        detector_1.processVideo(video_path="../video_data/",
-                                video_info=(c_pixel, c_fps, d_threads),
-                                model_name="model_1", show_result=False)
+        detector.processVideo(video_path="../video_data/",
+                              video_info=(c_pixel, c_fps, d_threads),
+                              show_result=False)
+        new_data = True
+
+        # (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps)
+        # c_pixel = new_pixel
+        # c_fps = new_fps
 
 
 background_thread = threading.Thread(target=processing_loop)
+background_thread.daemon = True  # Set the thread as a daemon, so it exits when the main program exits
+background_thread.start()
+
+
+# TODO: Maybe run the ACI in another thread
+def aci_loop():
+    global c_pixel, c_fps, new_data
+    while True:
+        if new_data:
+            new_data = False
+            (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps)
+            c_pixel = new_pixel
+            c_fps = new_fps
+        else:
+            time.sleep(0.2)
+
+
+background_thread = threading.Thread(target=aci_loop)
 background_thread.daemon = True  # Set the thread as a daemon, so it exits when the main program exits
 background_thread.start()
 
@@ -36,4 +68,10 @@ while True:
             d_threads += 1
         elif user_input == "-":
             d_threads = 1 if d_threads == 1 else (d_threads - 1)
+        elif user_input == "i":
+            aci.initialize()
+
+        c_fps = fps_list[d_threads-1]
+        c_pixel = pixel_list[d_threads-1]
+
         print(f"Changed to {d_threads} Threads")

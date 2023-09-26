@@ -11,7 +11,7 @@ from imutils.video import FPS
 import util
 import ModelParser
 from ModelParser import PrivacyChain
-from util import printExecutionTime, write_execution_times
+from util import getExecutionTime, write_execution_times
 
 
 class VideoDetector:
@@ -156,10 +156,10 @@ class VideoDetector:
                 cmA.commandFunction.transform(self.img, options=args_with_boxes)  # self.img =
                 boxes = None
 
-            delta = printExecutionTime(function_name, datetime.now(), start_time)
+            delta = getExecutionTime(function_name, datetime.now(), start_time)
 
         if self.write_stats:
-            overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
+            overall_delta = getExecutionTime("Overall Chain", datetime.now(), overall_time)
             self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), -1,
                                                       psutil.virtual_memory().percent,
                                                       self.resolution, fps, detected, self.distance,

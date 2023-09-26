@@ -5,34 +5,30 @@ import time
 from datetime import datetime
 
 import cv2
-import imutils
 import psutil
 from imutils.video import FPS
 
-import util
-import ModelParser
+import util_fgcs as util
 from ModelParser import PrivacyChain
-from util import printExecutionTime, write_execution_times
+from util_fgcs import getExecutionTime, write_execution_times
 
 
 class VideoProcessor:
     def __init__(self, privacy_chain: PrivacyChain = None, confidence_threshold=0.5,
-                 display_stats=False, write_stats=False, simulate_fps=False):
+                 display_stats=False, simulate_fps=False):
         self.img = None
         self.confidence_threshold = confidence_threshold
         self.privacy_chain = privacy_chain
         self.display_stats = display_stats
-        self.write_stats = write_stats
         self.write_store = None
         self.resolution = 0
         self.simulate_fps = simulate_fps
         self.old_center = (0, 0)
         self.distance = 0
 
-    def processVideo(self, video_path, video_info, model_name, show_result=False):
+    def processVideo(self, video_path, video_info, show_result=False):
 
-        if self.write_stats:
-            self.write_store = {"Overall_Chain": []}
+        self.write_store = []
 
         (source_res, source_fps, number_threads) = video_info
         print(f"Now processing: {source_res}{source_fps} with {number_threads} Thread(s)")
@@ -68,12 +64,12 @@ class VideoProcessor:
 
             # Adding one CPU Utilization for all entries in the thread
             cpu = psutil.cpu_percent()
-            last_x_items = list(self.write_store["Overall_Chain"])[-number_threads:]
-            self.write_store["Overall_Chain"] = self.write_store["Overall_Chain"][:-number_threads]
+            last_x_items = list(self.write_store)[-number_threads:]
+            self.write_store = self.write_store[:-number_threads]
             for item in last_x_items:
                 i = list(item)
                 i[2] = cpu
-                self.write_store["Overall_Chain"].append(tuple(i))
+                self.write_store.append(tuple(i))
 
             fps.update()
             (success, self.img) = cap.read()
@@ -88,8 +84,7 @@ class VideoProcessor:
             print("Elapsed time: {:.2f}s".format(fps.elapsed()))
             print("FPS: {:.2f}".format(fps.fps()))
 
-        if self.write_stats:
-            write_execution_times(self.write_store, "video_loop_1", model_name)
+        write_execution_times(self.write_store, number_threads)
 
     def processFrame_v3(self, fps=None, number_threads=1):
         boxes = None
@@ -119,11 +114,10 @@ class VideoProcessor:
                 cmA.commandFunction.transform(self.img, options=args_with_boxes)  # self.img =
                 boxes = None
 
-        if self.write_stats:
-            overall_delta = printExecutionTime("Overall Chain", datetime.now(), overall_time)
-            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), -1,
-                                                      psutil.virtual_memory().percent,
-                                                      self.resolution, fps, detected, self.distance,
-                                                      number_threads
-                                                      # util.get_consumption()
-                                                      ))
+        overall_delta = getExecutionTime(datetime.now(), overall_time)
+        self.write_store.append((overall_delta, datetime.now(), -1,
+                                 psutil.virtual_memory().percent,
+                                 self.resolution, fps, detected, self.distance,
+                                 util.get_consumption(),
+                                 number_threads
+                                 ))

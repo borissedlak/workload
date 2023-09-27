@@ -11,11 +11,8 @@ detector = VideoProcessor(privacy_chain=chain, display_stats=False, simulate_fps
 
 aci = ACI()
 
-pixel_list = ["120p", "180p", "240p", "360p", "480p", "720p"]
-fps_list = [12, 16, 20, 26, 30]
-
-c_pixel = pixel_list[0]
-c_fps = fps_list[0]
+c_pixel = ACI.pixel_list[0]
+c_fps = ACI.fps_list[0]
 c_mode = None
 
 d_threads = 1
@@ -71,7 +68,7 @@ while True:
         elif user_input == "i":
             aci.initialize()
 
-        c_fps = fps_list[d_threads-1]
-        c_pixel = pixel_list[d_threads-1]
+        c_fps = ACI.fps_list[d_threads-1]
+        c_pixel = ACI.pixel_list[d_threads-1]
 
         print(f"Changed to {d_threads} Threads")

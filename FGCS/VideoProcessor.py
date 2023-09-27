@@ -34,7 +34,7 @@ class VideoProcessor:
         print(f"Now processing: {source_res}{source_fps} with {number_threads} Thread(s)")
 
         available_time_frame = (1000 / source_fps)
-        cap = cv2.VideoCapture(video_path + source_res + "_" + str(source_fps) + ".mp4")
+        cap = cv2.VideoCapture(video_path + str(source_res) + "p_" + str(source_fps) + ".mp4")
         if not cap.isOpened():
             print("Error opening video ...")
             return
@@ -117,7 +117,7 @@ class VideoProcessor:
         overall_delta = getExecutionTime(datetime.now(), overall_time)
         self.write_store.append((overall_delta, datetime.now(), -1,
                                  psutil.virtual_memory().percent,
-                                 self.resolution, fps, detected, self.distance,
+                                 self.img.shape[0], fps, detected, self.distance,
                                  util.get_consumption(),
                                  number_threads
                                  ))

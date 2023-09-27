@@ -1,6 +1,5 @@
 import time
 from datetime import datetime
-from enum import Enum
 
 import networkx as nx
 import numpy as np
@@ -46,7 +45,7 @@ def write_execution_times(write_store, number_threads=1):
         f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance},{consumption},{thread_number}\n')
 
     f.close()
-    print("Performance file exported")
+    # print("Performance file exported")
 
     # upload_file()
 
@@ -140,3 +139,7 @@ def print_BN(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visualization=
             plt.savefig(f"{name}.png", dpi=400, bbox_inches="tight")  # default dpi is 100
         if show:
             plt.show()
+
+
+def get_true(param):
+    return param.values[1] if len(param.values) > 1 else param.values[0]

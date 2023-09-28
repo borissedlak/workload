@@ -19,7 +19,7 @@ d_threads = 1
 new_data = False
 override_next_config = None
 
-conf_history = []
+inferred_config_hist = []
 
 
 # Function for the background loop
@@ -29,7 +29,6 @@ def processing_loop():
         detector.processVideo(video_path="../video_data/",
                               video_info=(c_pixel, c_fps, d_threads),
                               show_result=False)
-        conf_history.append((c_pixel, c_fps))
         new_data = True
 
         # (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps)
@@ -48,19 +47,21 @@ class ACIBackgroundThread(threading.Thread):
         self.daemon = True  # Set the thread as a daemon so it will exit when the main program exits
 
     def run(self):
-        global c_pixel, c_fps, new_data, override_next_config, conf_history
+        global c_pixel, c_fps, new_data, override_next_config, inferred_config_hist
         while True:
             try:
                 if new_data:
                     new_data = False
-                    (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps)
+                    (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps, d_threads)
+                    inferred_config_hist.append((new_pixel, new_fps))
+
                     if override_next_config:
                         c_pixel, c_fps = override_next_config
                         override_next_config = None
                     else:
                         c_pixel, c_fps = new_pixel, new_fps
                 else:
-                    time.sleep(0.15)
+                    time.sleep(0.1)
             except Exception as e:
                 # Capture the traceback as a string
                 error_traceback = traceback.format_exc()
@@ -87,7 +88,8 @@ while True:
         elif user_input == "-":
             d_threads = 1 if d_threads == 1 else (d_threads - 1)
         elif user_input == "i":
-            aci.initialize()
+            aci.initialize_bn()
             continue
-
-        override_next_config = ACI.pixel_list[d_threads - 1], ACI.fps_list[d_threads - 1]
+        if user_input == "e":
+            aci.export_model()
+        # override_next_config = ACI.pixel_list[d_threads - 1], ACI.fps_list[d_threads - 1]

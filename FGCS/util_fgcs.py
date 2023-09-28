@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pgmpy
+import psutil
 import requests
 from matplotlib import pyplot as plt
 from networkx.drawing.nx_pydot import graphviz_layout
@@ -59,6 +60,12 @@ def write_execution_times(write_store, number_threads=1):
     # print("Performance file exported")
 
     # upload_file()
+
+
+def get_cpu_in_bin():
+    cpu = psutil.cpu_percent()
+    return pd.cut(pd.Series([cpu]), bins=[0, 50, 70, 90, 100], labels=['Low', 'Mid', 'High', 'Very High'],
+                  include_lowest=True)[0]
 
 
 def get_center_from_box(box):
@@ -115,14 +122,14 @@ def print_in_red(text):
     print("\x1b[31m" + text + "\x1b[0m")
 
 
-@print_execution_time
+# @print_execution_time
 def get_surprise_for_data(model: BayesianNetwork, data):
     # Create an inference object
     inference = VariableElimination(get_mbs_as_bn(model, ["success", "in_time"]))
 
     # Calculate BIC and AIC for each variable
     bic_sum = 0.0
-    aic_sum = 0.0
+    # aic_sum = 0.0
     try:
         for variable in ["success", "in_time"]:
             # Calculate log-likelihood for the variable
@@ -131,7 +138,6 @@ def get_surprise_for_data(model: BayesianNetwork, data):
             log_likelihood = 0.0
             evidence_variables = model.get_markov_blanket(variable)
 
-            # TODO: This is where the MB should reduce the complexity, maybe I can evaluate this here
             for _, row in data.iterrows():
                 evidence = {col: row[col] for col in evidence_variables}
                 query_result = inference.query(variables=[variable], evidence=evidence)
@@ -173,9 +179,9 @@ def get_mbs_as_bn(model: DAG | BayesianNetwork, center: [str]):
     return mb
 
 
-# @print_execution_time # took ~6ms
+# @print_execution_time # took ~13ms
 def verify_all_slo_parameters_known(model: BayesianNetwork, data):
-    for variable in ["success", "in_time"]:
+    for variable in ["success", "in_time", "fps", "pixel"]:
         cpd = model.get_cpds(variable)
         for _, row in data.iterrows():
             if row[variable] not in cpd.__getattribute__("state_names")[variable]:
@@ -207,15 +213,17 @@ def interpolate_values(matrix):
 
     # Interpolate missing values using griddata
     m = 'linear' if len(data_valid) >= 4 else 'nearest'
-    return griddata((x_valid, y_valid), data_valid, (xx, yy), method=m)
+    interpolated_data = griddata((x_valid, y_valid), data_valid, (xx, yy), method=m)
+
+    mask = np.isnan(interpolated_data)
+    interpolated_data[mask] = griddata((x_valid, y_valid), data_valid, (xx[mask], yy[mask]), method='nearest')
+    return interpolated_data
 
 
-def prepare_samples(samples):
+def prepare_samples(samples, t_distance):
     samples['bitrate'] = samples['fps'] * samples['pixel']
     samples['in_time'] = samples['execution_time'] <= (1000 / samples['fps'])
-    samples['distance'] = pd.cut(samples['distance'], bins=[0, 57, 99999],
-                                 labels=[True, False], include_lowest=True)
-    samples['distance'] = samples['distance'].astype(int)
+    samples['distance'] = samples['distance'] <= t_distance
     samples['cpu_utilization'] = pd.cut(samples['cpu_utilization'], bins=[0, 50, 70, 90, 100],
                                         labels=['Low', 'Mid', 'High', 'Very High'], include_lowest=True)
     samples['memory_usage'] = pd.cut(samples['memory_usage'], bins=[0, 50, 70, 90, 100],
@@ -226,8 +234,9 @@ def prepare_samples(samples):
     return samples
 
 
-def print_BN(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visualization=False, vis_ls=None, save=False,
-             name=None, show=True, color_map=None):
+def export_BN_to_graph(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visualization=False, vis_ls=None,
+                       save=False,
+                       name=None, show=True, color_map=None):
     if vis_ls is None:
         vis_ls = ["fdp"]
     else:

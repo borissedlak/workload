@@ -32,10 +32,11 @@ class ACI:
         self.entire_training_data = pd.DataFrame()
         self.past_training_data = pd.DataFrame()
         self.latest_structure = None
+        self.surprise_history = []
 
-        self.pv_matrix = np.full((6, 5), -1.0)  # low distance (object tracking?) & high transformed rate (privacy preservation)
+        self.pv_matrix = np.full((6, 5), -1.0)  # low distance & high transformed rate (privacy preservation)
         self.ra_matrix = np.full((6, 5), -1.0)  # slo violation rate? --> in_time, network, energy_cons
-        self.ig_matrix = np.full((6, 5), -1.0)  # surprise rate?
+        self.ig_matrix = np.full((6, 5), 0)  # surprise rate?
 
     def iterate(self, c_pixel, c_fps):
         self.load_last_batch()
@@ -51,18 +52,26 @@ class ACI:
         prediction = None
         actual = self.SLOs_fulfilled(self.current_batch)
 
+        # TODO: Not knowning all parameters should be a factor for high surprise!
+        if util_fgcs.verify_all_slo_parameters_known(self.model, self.current_batch):
+            s = util_fgcs.get_surprise_for_data(self.model, self.current_batch)
+            self.surprise_history.append(s)
+            if s > (2 * np.mean(self.surprise_history[-10:])):
+                self.retrain_parameter()
+        else:
+            # self.ig_matrix[ACI.pixel_list.index(c_pixel)][ACI.fps_list.index(c_fps)]
+            # self.ig_matrix[ACI.pixel_list.index(c_pixel)][ACI.fps_list.index(c_fps)] += 0.1
+            self.retrain_parameter()
+
         self.calculate_factors(self.model)
         new_config = self.get_best_configuration()
-
-        # new_config = c_pixel, c_fps
-        # TODO: Do this only if Bayesian surprise too high
-        self.retrain_parameter()
 
         return new_config
 
     def get_best_configuration(self):
-        pv_interpolated = self.interpolate_values(self.pv_matrix)
-        ra_interpolated = self.interpolate_values(self.ra_matrix)
+        pv_interpolated = util_fgcs.interpolate_values(self.pv_matrix)
+        ra_interpolated = util_fgcs.interpolate_values(self.ra_matrix)
+        # ig_interpolated = util_fgcs.interpolate_values(self.ig_matrix)
 
         max_sum = -float('inf')
         best_index = 0, 0
@@ -76,11 +85,11 @@ class ACI:
         p, f = best_index
         return ACI.pixel_list[p], ACI.fps_list[f]
 
-
     def calculate_factors(self, model):
         bitrate_list = model.__getattribute__("states")["bitrate"]
         var_el = VariableElimination(model)
 
+        # TODO: Probably too slow
         bitrate_group = self.entire_training_data.groupby('bitrate')
 
         for br in bitrate_list:
@@ -94,38 +103,25 @@ class ACI:
             self.pv_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = success
             self.ra_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = time
 
-            print(f"{br} returns {time} and {success}")
+            print(f"{int(br/fps)}p_{fps} returns {time} and {success}")
 
-    def interpolate_values(self, matrix):
-
-        x = np.arange(matrix.shape[1])
-        y = np.arange(matrix.shape[0])
-        xx, yy = np.meshgrid(x, y)
-
-        # Flatten the data and coordinates
-        x_flat = xx.flatten()
-        y_flat = yy.flatten()
-        data_flat = matrix.flatten()
-
-        # Remove the missing values (-1) from the data and coordinates
-        valid_indices = data_flat != -1
-        x_valid = x_flat[valid_indices]
-        y_valid = y_flat[valid_indices]
-        data_valid = data_flat[valid_indices]
-
-        # Interpolate missing values using griddata
-        m = 'cubic' if len(data_valid) >= 4 else 'nearest'
-        return griddata((x_valid, y_valid), data_valid, (xx, yy), method=m)
-
-    def infer_configuration(self):
+    def infer_configuration(self):#param.__getattribute__("state_names")[param.variables[0]]
         self.pv_matrix = 10
 
     @print_execution_time
-    def retrain_parameter(self):
-        # duplicate_rows = self.entire_training_data[self.entire_training_data.duplicated()]
-        # print(duplicate_rows)
-        self.model = BayesianNetwork(ebunch=self.model)
-        self.model.fit(self.entire_training_data)  # , n_prev_samples=len(self.past_training_data))
+    def retrain_parameter(self, full_retrain=False):
+        # self.model = BayesianNetwork(ebunch=self.model)
+        # cpds_empty = len(self.model.get_cpds()) == 0
+
+        if full_retrain:
+            self.model.fit(self.entire_training_data)
+        else:
+            try:
+                self.model.fit_update(self.current_batch, n_prev_samples=len(self.past_training_data))
+                # util_fgcs.print_in_red("No error!")
+            except ValueError as ve:
+                # print(f"Caught a ValueError: {ve}")
+                self.retrain_parameter(full_retrain=True)
         # TODO: export model.xml
 
     # TODO: Retrain the structure if it does not match the data anymore
@@ -179,7 +175,6 @@ class ACI:
     #         matrix[row_key] = {}
     #         for col_key in column_keys:
     #             matrix[row_key][col_key] = -1  # You can set initial values here if needed
-
 
     # plot_histogram_with_normal_distribution(records[30]['part_delay'])
 

@@ -1,3 +1,4 @@
+import copy
 import time
 from datetime import datetime
 
@@ -9,7 +10,9 @@ import requests
 from matplotlib import pyplot as plt
 from networkx.drawing.nx_pydot import graphviz_layout
 from pgmpy.base import DAG
+from pgmpy.inference import VariableElimination
 from pgmpy.models import BayesianNetwork
+from scipy.interpolate import griddata
 
 
 # class FPS(Enum):
@@ -33,6 +36,14 @@ def write_execution_times(write_store, number_threads=1):
     f = open(f'../data/Performance.csv', 'w+')
     f.write(
         'execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption,stream_count\n')
+
+    if number_threads > 1:
+        result = []
+        i = 0
+        while i < len(write_store):
+            result.append(write_store[i])
+            i += number_threads
+        write_store = result
 
     sum_other_elements = 0
     for tup in write_store[number_threads:]:
@@ -100,10 +111,110 @@ def print_execution_time(func):
     return wrapper
 
 
+def print_in_red(text):
+    print("\x1b[31m" + text + "\x1b[0m")
+
+
+@print_execution_time
+def get_surprise_for_data(model: BayesianNetwork, data):
+    # Create an inference object
+    inference = VariableElimination(get_mbs_as_bn(model, ["success", "in_time"]))
+
+    # Calculate BIC and AIC for each variable
+    bic_sum = 0.0
+    aic_sum = 0.0
+    try:
+        for variable in ["success", "in_time"]:
+            # Calculate log-likelihood for the variable
+
+            cpd = model.get_cpds(variable)
+            log_likelihood = 0.0
+            evidence_variables = model.get_markov_blanket(variable)
+
+            # TODO: This is where the MB should reduce the complexity, maybe I can evaluate this here
+            for _, row in data.iterrows():
+                evidence = {col: row[col] for col in evidence_variables}
+                query_result = inference.query(variables=[variable], evidence=evidence)
+                state_index = cpd.__getattribute__("state_names")[variable].index(row[variable])
+                p = query_result.values[state_index]
+                log_likelihood += np.log(p if p > 0 else 1e-10)
+
+            # Calculate degrees of freedom (k) for the variable
+            k = len(cpd.get_values().flatten()) - len(cpd.variables)
+
+            # Calculate BIC and AIC
+            n = len(data)
+            bic = -2 * log_likelihood + k * np.log(n)
+            # aic = -2 * log_likelihood + 2 * k
+
+            # Store the scores for this variable
+            bic_sum += bic
+            # aic_sum += aic
+    except ValueError or KeyError as e:
+        print_in_red(f"Should not happen after safeguard function!!!!" + e)
+
+    return bic_sum
+    # print(f"BIC {bic_sum}")
+    # print(f"AIC {aic_sum}")
+
+
+# @print_execution_time # takes ~2ms
+def get_mbs_as_bn(model: DAG | BayesianNetwork, center: [str]):
+    mb_list = []
+    for node in center:
+        mb_list.extend(model.get_markov_blanket(node))
+    mb = copy.deepcopy(model)
+
+    mb_list.extend(center)
+    for n in model.nodes:
+        if n not in mb_list:
+            mb.remove_node(n)
+
+    return mb
+
+
+# @print_execution_time # took ~6ms
+def verify_all_slo_parameters_known(model: BayesianNetwork, data):
+    for variable in ["success", "in_time"]:
+        cpd = model.get_cpds(variable)
+        for _, row in data.iterrows():
+            if row[variable] not in cpd.__getattribute__("state_names")[variable]:
+                return False
+
+        for v in model.get_markov_blanket(variable):
+            cpd = model.get_cpds(v)
+            for _, row in data.iterrows():
+                if row[v] not in cpd.__getattribute__("state_names")[v]:
+                    return False
+
+    return True
+
+
+def interpolate_values(matrix):
+    x = np.arange(matrix.shape[1])
+    y = np.arange(matrix.shape[0])
+    xx, yy = np.meshgrid(x, y)
+
+    # Flatten the data and coordinates
+    x_flat = xx.flatten()
+    y_flat = yy.flatten()
+    data_flat = matrix.flatten()
+
+    valid_indices = data_flat != -1  # -1 indicates empty values
+    x_valid = x_flat[valid_indices]
+    y_valid = y_flat[valid_indices]
+    data_valid = data_flat[valid_indices]
+
+    # Interpolate missing values using griddata
+    m = 'linear' if len(data_valid) >= 4 else 'nearest'
+    return griddata((x_valid, y_valid), data_valid, (xx, yy), method=m)
+
+
 def prepare_samples(samples):
     samples['bitrate'] = samples['fps'] * samples['pixel']
     samples['in_time'] = samples['execution_time'] <= (1000 / samples['fps'])
-    # samples['in_time'] = samples['in_time'].astype(bool)
+    samples['distance'] = pd.cut(samples['distance'], bins=[0, 57, 99999],
+                                 labels=[True, False], include_lowest=True)
     samples['distance'] = samples['distance'].astype(int)
     samples['cpu_utilization'] = pd.cut(samples['cpu_utilization'], bins=[0, 50, 70, 90, 100],
                                         labels=['Low', 'Mid', 'High', 'Very High'], include_lowest=True)
@@ -142,4 +253,10 @@ def print_BN(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visualization=
 
 
 def get_true(param):
-    return param.values[1] if len(param.values) > 1 else param.values[0]
+    if len(param.values) > 1:
+        return param.values[1]
+    elif param.__getattribute__("state_names")[param.variables[0]][0] == True:
+        return 1
+    else:
+        return 0
+        # else param.values[0]

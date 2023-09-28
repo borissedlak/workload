@@ -31,7 +31,7 @@ class VideoProcessor:
         self.write_store = []
 
         (source_res, source_fps, number_threads) = video_info
-        print(f"Now processing: {source_res}{source_fps} with {number_threads} Thread(s)")
+        print(f"Now processing: {source_res}p{source_fps} with {number_threads} Thread(s)")
 
         available_time_frame = (1000 / source_fps)
         cap = cv2.VideoCapture(video_path + str(source_res) + "p_" + str(source_fps) + ".mp4")

@@ -15,8 +15,8 @@ from pgmpy.inference import VariableElimination
 from pgmpy.models import BayesianNetwork
 from scipy.interpolate import griddata
 
-
 header_csv = 'execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption,stream_count\n'
+
 
 def print_execution_time(func):
     def wrapper(*args, **kwargs):
@@ -29,6 +29,7 @@ def print_execution_time(func):
 
     return wrapper
 
+
 def diffAsStringInMS(a: datetime, b: datetime):
     return int((a - b).microseconds / 1000)
 
@@ -38,6 +39,7 @@ def getExecutionTime(a: datetime, b: datetime):
         # print(f' {name} took {diffAsStringInMS(a, b)}ms')
         return diffAsStringInMS(a, b)
     return 0
+
 
 # @print_execution_time # takes ~1ms with both files
 def write_execution_times(write_store, number_threads=1):
@@ -67,19 +69,20 @@ def write_execution_times(write_store, number_threads=1):
     f.close()
     ph.close()
 
+
 def clear_performance_history(path):
     try:
         # Open the file in "w" mode, which creates an empty file or clears existing content
         with open(path, 'w+') as ph:
             ph.write(header_csv)
-        print(f"File '{path}' has been created or cleared.")
+        print(f"File '{path}' has been cleared.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
 
 def get_cpu_in_bin():
     cpu = psutil.cpu_percent()
-    return pd.cut(pd.Series([cpu]), bins=[0, 50, 70, 90, 100], labels=['Low', 'Mid', 'High', 'Very High'],
+    return pd.cut(pd.Series([cpu]), bins=[0, 50, 70, 90, 100], labels=['Low', 'Mid', 'High', 'Very_High'],
                   include_lowest=True)[0]
 
 
@@ -226,11 +229,22 @@ def interpolate_values(matrix):
 def prepare_samples(samples, t_distance):
     samples['bitrate'] = samples['fps'] * samples['pixel']
     samples['in_time'] = samples['execution_time'] <= (1000 / samples['fps'])
+
+    samples['bitrate'] = samples['bitrate'].astype(str)
+    samples['fps'] = samples['fps'].astype(str)
+    samples['pixel'] = samples['pixel'].astype(str)
+    samples['stream_count'] = samples['stream_count'].astype(str)
+    samples['consumption'] = samples['consumption'].astype(str)  # TODO: This waits for the regression still
+
     samples['distance'] = samples['distance'] <= t_distance
     samples['cpu_utilization'] = pd.cut(samples['cpu_utilization'], bins=[0, 50, 70, 90, 100],
-                                        labels=['Low', 'Mid', 'High', 'Very High'], include_lowest=True)
+                                        labels=['Low', 'Mid', 'High', 'Very_High'], include_lowest=True)
     samples['memory_usage'] = pd.cut(samples['memory_usage'], bins=[0, 50, 70, 90, 100],
-                                     labels=['Low', 'Mid', 'High', 'Very High'], include_lowest=True)
+                                     labels=['Low', 'Mid', 'High', 'Very_High'], include_lowest=True)
+
+    samples['success'] = samples['success'].astype(str)
+    samples['distance'] = samples['distance'].astype(str)
+    samples['in_time'] = samples['in_time'].astype(str)
 
     del samples['timestamp']
     del samples['execution_time']
@@ -262,6 +276,14 @@ def export_BN_to_graph(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visu
             plt.savefig(f"{name}.png", dpi=400, bbox_inches="tight")  # default dpi is 100
         if show:
             plt.show()
+
+
+def cap_0_1(num: float):
+    if num < 0.0:
+        return 0.0
+    elif num > 1.0:
+        return 1.0
+    return num
 
 
 def get_true(param):

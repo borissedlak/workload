@@ -11,7 +11,7 @@ privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-aci = ACI()
+aci = ACI(load_model="model.xml")
 
 c_pixel = ACI.pixel_list[0]
 c_fps = ACI.fps_list[0]
@@ -46,7 +46,7 @@ background_thread.start()
 class ACIBackgroundThread(threading.Thread):
     def __init__(self):
         super().__init__()
-        self.daemon = True  # Set the thread as a daemon so it will exit when the main program exits
+        self.daemon = True  # Set the thread as a daemon, so it will exit when the main program exits
 
     def run(self):
         global c_pixel, c_fps, new_data, override_next_config, inferred_config_hist
@@ -54,7 +54,7 @@ class ACIBackgroundThread(threading.Thread):
             try:
                 if new_data:
                     new_data = False
-                    (new_pixel, new_fps) = aci.iterate(d_threads)
+                    (new_pixel, new_fps) = aci.iterate(str(d_threads))
                     inferred_config_hist.append((new_pixel, new_fps))
 
                     if override_next_config:

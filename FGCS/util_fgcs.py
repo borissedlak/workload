@@ -16,11 +16,18 @@ from pgmpy.models import BayesianNetwork
 from scipy.interpolate import griddata
 
 
-# class FPS(Enum):
-#     TWELVE = 12
-#     GREEN = 2
-#     BLUE = 3
+header_csv = 'execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption,stream_count\n'
 
+def print_execution_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time_ms = (end_time - start_time) * 1000.0
+        print(f"{func.__name__} took {execution_time_ms:.0f} ms to execute")
+        return result
+
+    return wrapper
 
 def diffAsStringInMS(a: datetime, b: datetime):
     return int((a - b).microseconds / 1000)
@@ -32,11 +39,11 @@ def getExecutionTime(a: datetime, b: datetime):
         return diffAsStringInMS(a, b)
     return 0
 
-
+# @print_execution_time # takes ~1ms with both files
 def write_execution_times(write_store, number_threads=1):
-    f = open(f'../data/Performance.csv', 'w+')
-    f.write(
-        'execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption,stream_count\n')
+    f = open(f'../data/Last_Batch.csv', 'w+')
+    ph = open(f'../data/Performance_History.csv', 'a')
+    f.write(header_csv)
 
     if number_threads > 1:
         result = []
@@ -55,11 +62,19 @@ def write_execution_times(write_store, number_threads=1):
 
     for (delta, ts, cpu, memory, pixel, fps, detected, distance, consumption, thread_number) in write_store:
         f.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance},{consumption},{thread_number}\n')
+        ph.write(f'{delta},{ts},{cpu},{memory},{pixel},{fps},{detected},{distance},{consumption},{thread_number}\n')
 
     f.close()
-    # print("Performance file exported")
+    ph.close()
 
-    # upload_file()
+def clear_performance_history(path):
+    try:
+        # Open the file in "w" mode, which creates an empty file or clears existing content
+        with open(path, 'w+') as ph:
+            ph.write(header_csv)
+        print(f"File '{path}' has been created or cleared.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def get_cpu_in_bin():
@@ -98,24 +113,12 @@ def upload_file():
     url_post = "http://192.168.1.153:5000/upload"
 
     # A POST request to tthe API
-    files = {'file': open('../data/Performance.csv', 'rb')}
+    files = {'file': open('../data/Performance_History.csv', 'rb')}
     post_response = requests.post(url_post, files=files)
 
     # Print the response
     post_response_json = post_response.content
     print(post_response_json)
-
-
-def print_execution_time(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        execution_time_ms = (end_time - start_time) * 1000.0
-        print(f"{func.__name__} took {execution_time_ms:.0f} ms to execute")
-        return result
-
-    return wrapper
 
 
 def print_in_red(text):
@@ -181,16 +184,16 @@ def get_mbs_as_bn(model: DAG | BayesianNetwork, center: [str]):
 
 # @print_execution_time # took ~13ms
 def verify_all_slo_parameters_known(model: BayesianNetwork, data):
-    for variable in ["success", "in_time", "fps", "pixel"]:
+    for variable in ["success", "in_time", "fps", "pixel", "stream_count"]:
         cpd = model.get_cpds(variable)
         for _, row in data.iterrows():
-            if row[variable] not in cpd.__getattribute__("state_names")[variable]:
+            if row[variable] not in model.__getattribute__("states")[variable]:
                 return False
 
         for v in model.get_markov_blanket(variable):
             cpd = model.get_cpds(v)
             for _, row in data.iterrows():
-                if row[v] not in cpd.__getattribute__("state_names")[v]:
+                if row[v] not in model.__getattribute__("states")[v]:
                     return False
 
     return True

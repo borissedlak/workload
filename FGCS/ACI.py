@@ -10,6 +10,7 @@ from pgmpy.inference import VariableElimination
 from pgmpy.models import BayesianNetwork
 from pgmpy.readwrite import XMLBIFReader, XMLBIFWriter
 from scipy.stats import norm
+from sklearn.linear_model import LinearRegression
 
 from FGCS import util_fgcs
 from FGCS.util_fgcs import print_execution_time
@@ -34,6 +35,11 @@ class ACI:
         self.foster_bn_retrain = 0.5
         self.c_distance_bar = 50
 
+        self.valid_stream_values_time = []
+        self.valid_stream_values_success = []
+        self.stream_regression_model_time = LinearRegression()
+        self.stream_regression_model_success = LinearRegression()
+
         self.pv_matrix = np.full((6, 5), -1.0)  # low distance & high transformed rate (privacy preservation)
         self.ra_matrix = np.full((6, 5), -1.0)  # slo violation rate? --> in_time, network, energy_cons
         self.ig_matrix = np.full((6, 5), -1.0)  # surprise rate?
@@ -43,9 +49,11 @@ class ACI:
         self.ig_matrix[0][0], self.ig_matrix[5][4], self.ig_matrix[5][0], self.ig_matrix[0][4], \
             self.ig_matrix[3][2] = 0.0, 0.3, 0.3, 0.3, 0.3
 
-    def iterate(self, c_pixel, c_fps, c_stream_count):
+    def iterate(self, c_stream_count):
         self.load_last_batch()
         self.past_training_data = self.entire_training_data.copy()
+        c_pixel = self.current_batch.iloc[0]['pixel']
+        c_fps = self.current_batch.iloc[0]['fps']
 
         if len(self.past_training_data) == 0:
             self.bnl(self.current_batch)
@@ -57,13 +65,12 @@ class ACI:
         # prediction = None
         # actual = self.SLOs_fulfilled(self.current_batch)
 
-        # TODO: Not knowing all parameters should be a factor for high surprise!
         if util_fgcs.verify_all_slo_parameters_known(self.model, self.current_batch):
             s = util_fgcs.get_surprise_for_data(self.model, self.current_batch)
             self.surprise_history.append(s)
 
             mean_surprise_last_10_values = np.median(self.surprise_history[-10:])
-            if s > ((1.8 - self.foster_bn_retrain) * mean_surprise_last_10_values):
+            if s > ((2 - self.foster_bn_retrain) * mean_surprise_last_10_values):
                 if self.foster_bn_retrain == 0.5:
                     self.foster_bn_retrain = 0.2
                 elif self.foster_bn_retrain == 0.2:
@@ -74,7 +81,7 @@ class ACI:
                 self.retrain_parameter()
 
         else:
-            self.retrain_parameter(full_retrain=True)
+            self.retrain_parameter()
 
         self.calculate_factors(self.model, c_pixel, c_fps, c_stream_count)
         new_config = self.get_best_configuration(c_stream_count)
@@ -82,7 +89,6 @@ class ACI:
         return new_config
 
     def get_best_configuration(self, c_stream_count):
-        # TODO: The interpolation does not work towards the borders of the matrix
         pv_interpolated = util_fgcs.interpolate_values(self.pv_matrix)
         ra_interpolated = util_fgcs.interpolate_values(self.ra_matrix)
         ig_interpolated = util_fgcs.interpolate_values(self.ig_matrix)
@@ -91,8 +97,7 @@ class ACI:
         best_index = 0, 0
         for i in range(len(ACI.pixel_list)):
             for j in range(len(ACI.fps_list)):
-                element_sum = (pv_interpolated[i, j] + ra_interpolated[i, j] + ig_interpolated[i, j]
-                               - ((i+j) * (c_stream_count - 1)))
+                element_sum = (pv_interpolated[i, j] + ra_interpolated[i, j] + ig_interpolated[i, j])
                 if element_sum > max_sum:
                     max_sum = element_sum
                     best_index = i, j
@@ -111,8 +116,15 @@ class ACI:
 
         bitrate_list = model.__getattribute__("states")["bitrate"]
         inference = VariableElimination(
-            util_fgcs.get_mbs_as_bn(model, ["success", "in_time", "bitrate"]))
+            util_fgcs.get_mbs_as_bn(model, ["success", "in_time", "bitrate", "stream_count"]))
         bitrate_group = self.entire_training_data.groupby('bitrate')  # TODO: Probably too slow
+
+        # Ensure that the current one is processed first to train the regression
+        current_bitrate = c_pixel * c_fps
+        bitrate_list.remove(current_bitrate)
+        bitrate_list.insert(0, current_bitrate)
+
+        unknown_combinations = []
 
         for br in bitrate_list:
             fps = bitrate_group.get_group(br)['fps'].min()
@@ -120,25 +132,41 @@ class ACI:
 
             # distance = var_el.query(variables=[distance_slo], evidence={'bitrate': br, 'config': mode}).values[1]
             # evidence_variables = model.get_markov_blanket("in_time")# In theory, this comes from the MB
-            evidence = {'bitrate': br}  # 'pixel': pixel, 'fps': fps,# TODO: Must do regression from stream --> others
-            time = util_fgcs.get_true(inference.query(variables=["in_time"], evidence=evidence))
-            success = util_fgcs.get_true(inference.query(variables=["success"], evidence=evidence))
 
-            # if np.isnan(time) or np.isnan(success):
+            # if stream_count_known:
+            try:
+                evidence = {'bitrate': br}
+                time = util_fgcs.get_true(inference.query(variables=["in_time"], evidence=evidence))
+                success = util_fgcs.get_true(inference.query(variables=["success"], evidence=evidence))
 
-            self.pv_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = success
-            self.ra_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = time
+                self.valid_stream_values_time.append((pixel, fps, c_stream_count, time))
+                self.valid_stream_values_success.append((pixel, fps, c_stream_count, success))
+                self.pv_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = success
+                self.ra_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = time
+            except Exception as ex:
+                unknown_combinations.append((fps, pixel, c_stream_count))
+                print(ex)
+
+        if len(unknown_combinations) > 0:
+
+            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_time])
+            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_time])
+            self.stream_regression_model_time.fit(input_data, target_data)
+
+            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_success])
+            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_success])
+            self.stream_regression_model_success.fit(input_data, target_data)
+
+            for uc in unknown_combinations:
+                print(uc)
 
             # print(f"{int(br / fps)}p_{fps} returns {time} and {success}")
 
     def infer_configuration(self):
         self.pv_matrix = 10
 
-    # @print_execution_time
+    @print_execution_time
     def retrain_parameter(self, full_retrain=False):
-        # self.model = BayesianNetwork(ebunch=self.model)
-        # cpds_empty = len(self.model.get_cpds()) == 0
-
         if full_retrain:
             self.model.fit(self.entire_training_data)
         else:
@@ -149,7 +177,6 @@ class ACI:
                 # print(f"Caught a ValueError: {ve}")
                 self.retrain_parameter(full_retrain=True)
 
-    # TODO: Retrain the structure if it does not match the data anymore
     def initialize_bn(self):
         self.bnl(self.entire_training_data)
 
@@ -174,7 +201,7 @@ class ACI:
         self.model.fit(data=samples, estimator=MaximumLikelihoodEstimator)
 
     def load_last_batch(self):
-        samples = pd.read_csv('../data/Performance.csv')
+        samples = pd.read_csv('../data/Last_Batch.csv')
         samples = util_fgcs.prepare_samples(samples, self.c_distance_bar)
         self.current_batch = samples
 
@@ -185,13 +212,6 @@ class ACI:
             return True
         else:
             return False
-
-    # def get_surprise(historical_data, batch):
-    #     mean = np.mean(historical_data)
-    #     std_dev = np.std(historical_data)
-    #     pdf_values = stats.norm.pdf(batch, loc=mean, scale=std_dev)
-    #     nll_values = -np.log(np.maximum(pdf_values, 1e-10))
-    #     return np.sum(nll_values)
 
     def plot_boxplot(column_data):
         plt.boxplot(column_data)

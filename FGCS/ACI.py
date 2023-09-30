@@ -37,7 +37,7 @@ class ACI:
         if load_model:
             print("Loading pretained model")
             self.model = XMLBIFReader(load_model).get_model()
-            util_fgcs.export_BN_to_graph(self.model, vis_ls=["circo"])
+            util_fgcs.export_BN_to_graph(self.model, vis_ls=["circo"], save=True, name="raw_model")
             self.foster_bn_retrain = 0.2
             self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"), self.c_distance_bar)
         else:

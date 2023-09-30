@@ -9,6 +9,7 @@ import psutil
 from imutils.video import FPS
 
 import util_fgcs as util
+from FGCS.ConsumptionRegression import ConsRegression
 from ModelParser import PrivacyChain
 from util_fgcs import getExecutionTime, write_execution_times
 
@@ -25,6 +26,7 @@ class VideoProcessor:
         self.simulate_fps = simulate_fps
         self.old_center = (0, 0)
         self.distance = 0
+        self.consumption_regression = ConsRegression('Xavier')
 
     def processVideo(self, video_path, video_info, show_result=False):
 
@@ -64,11 +66,13 @@ class VideoProcessor:
 
             # Adding one CPU Utilization for all entries in the thread
             cpu = psutil.cpu_percent()
+            consumption = self.consumption_regression.predict(cpu, 0)  # TODO: Must detect GPU
             last_x_items = list(self.write_store)[-number_threads:]
             self.write_store = self.write_store[:-number_threads]
             for item in last_x_items:
                 i = list(item)
                 i[2] = cpu
+                i[8] = consumption
                 self.write_store.append(tuple(i))
 
             fps.update()
@@ -118,6 +122,6 @@ class VideoProcessor:
         self.write_store.append((overall_delta, datetime.now(), -1,
                                  psutil.virtual_memory().percent,
                                  self.img.shape[0], fps, detected, self.distance,
-                                 util.get_consumption(),
+                                 -1,
                                  number_threads
                                  ))

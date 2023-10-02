@@ -3,6 +3,9 @@ import random
 import threading
 import time
 from datetime import datetime
+from os.path import join, dirname
+
+import onnxruntime as ort
 
 import cv2
 import psutil
@@ -27,6 +30,7 @@ class VideoProcessor:
         self.old_center = (0, 0)
         self.distance = 0
         self.consumption_regression = ConsRegression('Xavier')
+        self.gpu_available = self.detect_gpu()
 
     def processVideo(self, video_path, video_info, show_result=False):
 
@@ -66,7 +70,7 @@ class VideoProcessor:
 
             # Adding one CPU Utilization for all entries in the thread
             cpu = psutil.cpu_percent()
-            consumption = self.consumption_regression.predict(cpu, 0)  # TODO: Must detect GPU
+            consumption = self.consumption_regression.predict(cpu, self.gpu_available)
             last_x_items = list(self.write_store)[-number_threads:]
             self.write_store = self.write_store[:-number_threads]
             for item in last_x_items:
@@ -125,3 +129,10 @@ class VideoProcessor:
                                  -1,
                                  number_threads
                                  ))
+
+    def detect_gpu(self):
+        face_detector_onnx = "../detector/models/version-RFB-320.onnx"
+        session = ort.InferenceSession(face_detector_onnx, providers=["CUDAExecutionProvider"])
+        providers = session.get_providers()
+        return 1 if "CUDAExecutionProvider" in providers else 0
+

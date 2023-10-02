@@ -19,8 +19,8 @@ from FGCS.util_fgcs import print_execution_time
 
 ROOT = os.path.dirname(__file__)
 
-
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 
 class ACI:
     pixel_list = [120, 180, 240, 300, 360, 420]
@@ -87,6 +87,7 @@ class ACI:
             s = util_fgcs.get_surprise_for_data(self.model, self.current_batch)
             self.surprise_history.append(s)
 
+            # TODO: Both the 2 and the foster_param can be hyperparameters
             mean_surprise_last_10_values = np.median(self.surprise_history[-10:])
             if s >= ((2 - self.foster_bn_retrain) * mean_surprise_last_10_values) and not self.load_model:
                 if self.foster_bn_retrain == 0.5:
@@ -133,7 +134,6 @@ class ACI:
         bitrate_list = model.__getattribute__("states")["bitrate"].copy()
         inference = VariableElimination(
             util_fgcs.get_mbs_as_bn(model, ["success", "in_time", "bitrate", "stream_count"]))
-        # bitrate_group = self.entire_training_data.groupby('bitrate')  # TODO: Probably too slow
 
         # Ensure that the current one is processed first to train the regression
         current_bitrate = str(int(c_pixel) * int(c_fps))
@@ -154,7 +154,6 @@ class ACI:
                 evidence = {'bitrate': br, 'stream_count': c_stream_count}
                 time = util_fgcs.get_true(inference.query(variables=["in_time"], evidence=evidence))
                 success = util_fgcs.get_true(inference.query(variables=["success"], evidence=evidence))
-
 
                 if np.isnan(time) or np.isnan(success):
                     raise ValueError("_nan")

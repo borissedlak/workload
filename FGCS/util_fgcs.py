@@ -105,12 +105,6 @@ def get_relative_distance_between_points(p1, p2, img):
         [p2_x / img.shape[1], p2_y / img.shape[0]])) * 1000)
     # return math.ceil(math.sqrt(((p1_x - p2_x)/img.shape[1])**2 + ((p1_y - p2_y)/img.shape[0])**2) * 1000)
 
-
-# TODO: Provide some regression based on existing data
-def get_consumption():
-    return 100
-
-
 def upload_file():
     # The API endpoint to communicate with
     url_post = "http://192.168.1.153:5000/upload"
@@ -234,7 +228,7 @@ def prepare_samples(samples, t_distance):
     samples['fps'] = samples['fps'].astype(str)
     samples['pixel'] = samples['pixel'].astype(str)
     samples['stream_count'] = samples['stream_count'].astype(str)
-    samples['consumption'] = samples['consumption'].astype(str)  # TODO: This waits for the regression still
+    samples['consumption'] = samples['consumption'].astype(str)
 
     samples['distance'] = samples['distance'] <= t_distance
     samples['cpu_utilization'] = pd.cut(samples['cpu_utilization'], bins=[0, 50, 70, 90, 100],

@@ -12,13 +12,14 @@ import psutil
 from imutils.video import FPS
 
 import util_fgcs as util
-from FGCS.ConsumptionRegression import ConsRegression
+from ConsumptionRegression import ConsRegression
 from ModelParser import PrivacyChain
+from Triggers import Face_Trigger
 from util_fgcs import getExecutionTime, write_execution_times
 
 
 class VideoProcessor:
-    def __init__(self, privacy_chain: PrivacyChain = None, confidence_threshold=0.5,
+    def __init__(self, device_name, privacy_chain: PrivacyChain = None, confidence_threshold=0.5,
                  display_stats=False, simulate_fps=False):
         self.img = None
         self.confidence_threshold = confidence_threshold
@@ -29,7 +30,7 @@ class VideoProcessor:
         self.simulate_fps = simulate_fps
         self.old_center = (0, 0)
         self.distance = 0
-        self.consumption_regression = ConsRegression('Xavier')
+        self.consumption_regression = ConsRegression(device_name)
         self.gpu_available = self.detect_gpu()
 
     def processVideo(self, video_path, video_info, show_result=False):
@@ -131,8 +132,6 @@ class VideoProcessor:
                                  ))
 
     def detect_gpu(self):
-        face_detector_onnx = "../detector/models/version-RFB-320.onnx"
-        session = ort.InferenceSession(face_detector_onnx, providers=["CUDAExecutionProvider"])
-        providers = session.get_providers()
+        face_detector_onnx = Face_Trigger()
+        providers = face_detector_onnx.face_detector.get_providers()
         return 1 if "CUDAExecutionProvider" in providers else 0
-

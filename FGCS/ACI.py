@@ -14,8 +14,8 @@ from pgmpy.readwrite import XMLBIFReader, XMLBIFWriter
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from FGCS import util_fgcs
-from FGCS.util_fgcs import print_execution_time
+import util_fgcs
+from util_fgcs import print_execution_time
 
 ROOT = os.path.dirname(__file__)
 
@@ -32,14 +32,16 @@ class ACI:
         bitrate = pair[0] * pair[1]
         bitrate_dict.update({bitrate: [pair[0], pair[1]]})
 
-    def __init__(self, load_model=None, trace=False):
-        self.c_distance_bar = 50
+    def __init__(self, load_model=None, distance_slo=40, network_slo=99999):
+        self.c_distance_bar = distance_slo
+        self.c_network_bar = network_slo
         if load_model:
             print("Loading pretained model")
             self.model = XMLBIFReader(load_model).get_model()
             util_fgcs.export_BN_to_graph(self.model, vis_ls=["circo"], save=True, name="raw_model")
             self.foster_bn_retrain = 0.2
-            self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"), self.c_distance_bar)
+            self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"),
+                                                         self.c_distance_bar, self.c_network_bar)
         else:
             self.model = None
             self.foster_bn_retrain = 0.5
@@ -51,11 +53,12 @@ class ACI:
         self.past_training_data = pd.DataFrame()
         # self.latest_structure = None
         self.surprise_history = []
+        self.function_time = []
 
-        self.valid_stream_values_time = []
-        self.valid_stream_values_success = []
-        self.stream_regression_model_time = LinearRegression()
-        self.stream_regression_model_success = LinearRegression()
+        self.valid_stream_values_ra = []
+        self.valid_stream_values_pv = []
+        self.stream_regression_model_ra = LinearRegression()
+        self.stream_regression_model_pv = LinearRegression()
         self.poly_features = PolynomialFeatures(degree=4)
 
         self.pv_matrix = np.full((6, 5), -1.0)  # low distance & high transformed rate (privacy preservation)
@@ -68,6 +71,7 @@ class ACI:
             self.ig_matrix[2][2] = 0.0, 0.3, 0.3, 0.3, 0.3
 
     def iterate(self, c_stream_count):
+        # start_time = time.time()
         self.load_last_batch()
         self.past_training_data = self.entire_training_data.copy()
         c_pixel = int(self.current_batch.iloc[0]['pixel'])
@@ -76,9 +80,8 @@ class ACI:
         if len(self.past_training_data) == 0 and self.model is None:
             self.bnl(self.current_batch)
             self.entire_training_data = self.current_batch.copy()
-            return c_pixel, c_fps
-
-        self.entire_training_data = pd.concat([self.entire_training_data, self.current_batch], ignore_index=True)
+        else:
+            self.entire_training_data = pd.concat([self.entire_training_data, self.current_batch], ignore_index=True)
 
         # prediction = None
         # actual = self.SLOs_fulfilled(self.current_batch)
@@ -89,23 +92,27 @@ class ACI:
 
             # TODO: Both the 2 and the foster_param can be hyperparameters
             mean_surprise_last_10_values = np.median(self.surprise_history[-10:])
-            if s >= ((2 - self.foster_bn_retrain) * mean_surprise_last_10_values) and not self.load_model:
+            if s > ((2 - self.foster_bn_retrain) * mean_surprise_last_10_values):
                 if self.foster_bn_retrain == 0.5:
                     self.foster_bn_retrain = 0.2
                 elif self.foster_bn_retrain == 0.2:
                     self.foster_bn_retrain = 0.0
                 # So far it retrains the structure if the values are very surprising, not sure if that 100% fine
                 self.initialize_bn()
-            elif s >= (1 * mean_surprise_last_10_values):
+            elif s > (1 * mean_surprise_last_10_values):
                 self.retrain_parameter()
         else:
             self.retrain_parameter()
 
         self.calculate_factors(self.model, c_pixel, c_fps, c_stream_count)
-        p, f = self.get_best_configuration(c_stream_count)
-        return int(p), int(f)
+        p, f, pv, ra = self.get_best_configuration()
 
-    def get_best_configuration(self, c_stream_count):
+        # end_time = time.time()
+        # execution_time_ms = (end_time - start_time) * 1000.0
+        # self.function_time.append(execution_time_ms)
+        return int(p), int(f), pv, ra
+
+    def get_best_configuration(self):
         pv_interpolated = util_fgcs.interpolate_values(self.pv_matrix)
         ra_interpolated = util_fgcs.interpolate_values(self.ra_matrix)
         ig_interpolated = util_fgcs.interpolate_values(self.ig_matrix)
@@ -120,20 +127,16 @@ class ACI:
                     best_index = i, j
 
         p, f = best_index
-        return ACI.pixel_list[p], ACI.fps_list[f]
+        return ACI.pixel_list[p], ACI.fps_list[f], pv_interpolated[p, f], ra_interpolated[p, f]
 
     # @print_execution_time # takes around 10-15ms
     def calculate_factors(self, model, c_pixel, c_fps, c_stream_count):
 
-        # ig_current_config = self.ig_matrix[ACI.pixel_list.index(c_pixel)][ACI.fps_list.index(c_fps)]
-        # if ig_current_config == -1 or ig_current_config == 0.3:
-        #     self.ig_matrix[ACI.pixel_list.index(c_pixel)][ACI.fps_list.index(c_fps)] = 0.1
-        # else:
         self.ig_matrix[ACI.pixel_list.index(int(c_pixel))][ACI.fps_list.index(int(c_fps))] = 0.0
 
         bitrate_list = model.__getattribute__("states")["bitrate"].copy()
         inference = VariableElimination(
-            util_fgcs.get_mbs_as_bn(model, ["success", "in_time", "bitrate", "stream_count"]))
+            util_fgcs.get_mbs_as_bn(model, ["success", "in_time", "bitrate", "stream_count", "network", "distance"]))
 
         # Ensure that the current one is processed first to train the regression
         current_bitrate = str(int(c_pixel) * int(c_fps))
@@ -146,22 +149,18 @@ class ACI:
             pixel = ACI.bitrate_dict[int(br)][0]
             fps = ACI.bitrate_dict[int(br)][1]
 
-            # distance = var_el.query(variables=[distance_slo], evidence={'bitrate': br, 'config': mode}).values[1]
-            # evidence_variables = model.get_markov_blanket("in_time")# In theory, this comes from the MB
-
             try:
-
                 evidence = {'bitrate': br, 'stream_count': c_stream_count}
-                time = util_fgcs.get_true(inference.query(variables=["in_time"], evidence=evidence))
-                success = util_fgcs.get_true(inference.query(variables=["success"], evidence=evidence))
+                ra = util_fgcs.get_true(inference.query(variables=["in_time", "network"], evidence=evidence))
+                pv = util_fgcs.get_true(inference.query(variables=["success", "distance"], evidence=evidence))
 
-                if np.isnan(time) or np.isnan(success):
+                if np.isnan(ra) or np.isnan(pv):
                     raise ValueError("_nan")
 
-                self.valid_stream_values_success.append((pixel, fps, int(c_stream_count), success))
-                self.pv_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = success
-                self.valid_stream_values_time.append((pixel, fps, int(c_stream_count), time))
-                self.ra_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = time
+                self.valid_stream_values_pv.append((pixel, fps, int(c_stream_count), pv))
+                self.pv_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = pv
+                self.valid_stream_values_ra.append((pixel, fps, int(c_stream_count), ra))
+                self.ra_matrix[ACI.pixel_list.index(pixel)][ACI.fps_list.index(fps)] = ra
             except Exception as ex:
                 unknown_combinations.append((pixel, fps, int(c_stream_count)))
                 if str(ex) != "_nan":
@@ -169,15 +168,15 @@ class ACI:
 
         if len(unknown_combinations) > 0:
 
-            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_time])
+            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_ra])
             input_data = self.poly_features.fit_transform(input_data)
-            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_time])
-            self.stream_regression_model_time.fit(input_data, target_data)
+            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_ra])
+            self.stream_regression_model_ra.fit(input_data, target_data)
 
-            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_success])
+            input_data = np.array([(x1, x2, x3) for x1, x2, x3, y in self.valid_stream_values_pv])
             input_data = self.poly_features.fit_transform(input_data)
-            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_success])
-            self.stream_regression_model_success.fit(input_data, target_data)
+            target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_pv])
+            self.stream_regression_model_pv.fit(input_data, target_data)
 
             # x_range = np.linspace(1, 10, 100)  # Adjust the number of points as needed
             # y_pred_full = self.stream_regression_model_time.predict(self.poly_features.fit_transform(x_range))
@@ -187,10 +186,10 @@ class ACI:
 
             for p, f, s in unknown_combinations:
                 input_vector = self.poly_features.fit_transform(np.array([[p, f, s]]))
-                success_predict = util_fgcs.cap_0_1(self.stream_regression_model_success.predict(input_vector)[0])
-                self.pv_matrix[ACI.pixel_list.index(p)][ACI.fps_list.index(f)] = success_predict
-                time_predict = util_fgcs.cap_0_1(self.stream_regression_model_time.predict(input_vector)[0])
-                self.ra_matrix[ACI.pixel_list.index(p)][ACI.fps_list.index(f)] = time_predict
+                pv_predict = util_fgcs.cap_0_1(self.stream_regression_model_pv.predict(input_vector)[0])
+                self.pv_matrix[ACI.pixel_list.index(p)][ACI.fps_list.index(f)] = pv_predict
+                ra_predict = util_fgcs.cap_0_1(self.stream_regression_model_ra.predict(input_vector)[0])
+                self.ra_matrix[ACI.pixel_list.index(p)][ACI.fps_list.index(f)] = ra_predict
 
             # print(f"{int(br / fps)}p_{fps} returns {time} and {success}")
 
@@ -244,7 +243,7 @@ class ACI:
 
     def load_last_batch(self):
         samples = pd.read_csv('../data/Last_Batch.csv')
-        samples = util_fgcs.prepare_samples(samples, self.c_distance_bar)
+        samples = util_fgcs.prepare_samples(samples, self.c_distance_bar, self.c_network_bar)
         self.current_batch = samples
 
     def SLOs_fulfilled(self, batch: pd.DataFrame):

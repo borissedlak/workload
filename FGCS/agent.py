@@ -3,39 +3,39 @@ import traceback
 
 import ModelParser
 import Models
-from FGCS import util_fgcs
-from FGCS.ACI import ACI
+import util_fgcs
+from ACI import ACI
 from VideoProcessor import *
+from http_client import HttpClient
+
+device_name = "Laptop"
 
 privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
-detector = VideoProcessor(privacy_chain=chain, display_stats=False, simulate_fps=True)
+detector = VideoProcessor(device_name=device_name, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-aci = ACI(load_model="model.xml")
+aci = ACI(distance_slo=30, network_slo=(420 * 30 * 4), load_model="model.xml")
 
-c_pixel = ACI.pixel_list[0]
-c_fps = ACI.fps_list[0]
+c_pixel = ACI.pixel_list[4]
+c_fps = ACI.fps_list[2]
 c_mode = None
 
-d_threads = 1
 new_data = False
 override_next_config = None
 
 inferred_config_hist = []
 util_fgcs.clear_performance_history('../data/Performance_History.csv')
 
+http_client = HttpClient()
+
 # Function for the background loop
 def processing_loop():
     global c_pixel, c_fps, new_data
     while True:
         detector.processVideo(video_path="../video_data/",
-                              video_info=(c_pixel, c_fps, d_threads),
+                              video_info=(c_pixel, c_fps, http_client.get_latest_stream_config()),
                               show_result=False)
         new_data = True
-
-        # (new_pixel, new_fps) = aci.iterate(c_pixel, c_fps)
-        # c_pixel = new_pixel
-        # c_fps = new_fps
 
 
 background_thread = threading.Thread(target=processing_loop)
@@ -54,16 +54,17 @@ class ACIBackgroundThread(threading.Thread):
             try:
                 if new_data:
                     new_data = False
-                    (new_pixel, new_fps) = aci.iterate(str(d_threads))
+                    d_threads = http_client.get_latest_stream_config()
+                    (new_pixel, new_fps, pv, ra) = aci.iterate(str(d_threads))
+                    http_client.send_stats(new_pixel, new_fps, pv, ra, d_threads, device_name)
                     inferred_config_hist.append((new_pixel, new_fps))
-
                     if override_next_config:
                         c_pixel, c_fps = override_next_config
                         override_next_config = None
                     else:
-                        c_pixel, c_fps = new_pixel, new_fps
+                        1+1# c_pixel, c_fps = new_pixel, new_fps
                 else:
-                    time.sleep(0.5)
+                    time.sleep(0.2)
             except Exception as e:
                 # Capture the traceback as a string
                 error_traceback = traceback.format_exc()
@@ -85,17 +86,16 @@ while True:
 
     # Check if the user entered a command
     if user_input:
+        threads = http_client.get_latest_stream_config()
         if user_input == "+":
-            d_threads += 1
+            http_client.override_stream_config(threads + 1)
         elif user_input == "-":
-            d_threads = 1 if d_threads == 1 else (d_threads - 1)
+            http_client.override_stream_config(1 if threads == 1 else (threads - 1))
         elif user_input == "i":
             aci.initialize_bn()
-            continue
-        if user_input == "e":
+        elif user_input == "e":
             aci.export_model()
-        if user_input == "q":
+        elif user_input == "q":
             aci.export_model()
-            #TODO: Upload file
+            # TODO: Upload file
             sys.exit()
-        # override_next_config = ACI.pixel_list[d_threads - 1], ACI.fps_list[d_threads - 1]

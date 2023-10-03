@@ -17,6 +17,7 @@ from scipy.interpolate import griddata
 
 header_csv = 'execution_time,timestamp,cpu_utilization,memory_usage,pixel,fps,success,distance,consumption,stream_count\n'
 
+store = {}
 
 def print_execution_time(func):
     def wrapper(*args, **kwargs):
@@ -105,6 +106,7 @@ def get_relative_distance_between_points(p1, p2, img):
         [p2_x / img.shape[1], p2_y / img.shape[0]])) * 1000)
     # return math.ceil(math.sqrt(((p1_x - p2_x)/img.shape[1])**2 + ((p1_y - p2_y)/img.shape[0])**2) * 1000)
 
+
 def upload_file():
     # The API endpoint to communicate with
     url_post = "http://192.168.1.153:5000/upload"
@@ -125,15 +127,13 @@ def print_in_red(text):
 # @print_execution_time
 def get_surprise_for_data(model: BayesianNetwork, data):
     # Create an inference object
-    inference = VariableElimination(get_mbs_as_bn(model, ["success", "in_time"]))
+    inference = VariableElimination(get_mbs_as_bn(model, ["success", "in_time", "network", "distance"]))
 
     # Calculate BIC and AIC for each variable
     bic_sum = 0.0
     # aic_sum = 0.0
     try:
-        for variable in ["success", "in_time"]:
-            # Calculate log-likelihood for the variable
-
+        for variable in ["success"]:
             cpd = model.get_cpds(variable)
             log_likelihood = 0.0
             evidence_variables = model.get_markov_blanket(variable)
@@ -145,17 +145,11 @@ def get_surprise_for_data(model: BayesianNetwork, data):
                 p = query_result.values[state_index]
                 log_likelihood += np.log(p if p > 0 else 1e-10)
 
-            # Calculate degrees of freedom (k) for the variable
             k = len(cpd.get_values().flatten()) - len(cpd.variables)
 
-            # Calculate BIC and AIC
             n = len(data)
             bic = -2 * log_likelihood + k * np.log(n)
-            # aic = -2 * log_likelihood + 2 * k
-
-            # Store the scores for this variable
             bic_sum += bic
-            # aic_sum += aic
     except ValueError or KeyError as e:
         print_in_red(f"Should not happen after safeguard function!!!!" + e)
 
@@ -165,7 +159,7 @@ def get_surprise_for_data(model: BayesianNetwork, data):
 
 
 # @print_execution_time # takes ~2ms
-def get_mbs_as_bn(model: DAG | BayesianNetwork, center: [str]):
+def get_mbs_as_bn(model: DAG or BayesianNetwork, center: [str]):
     mb_list = []
     for node in center:
         mb_list.extend(model.get_markov_blanket(node))
@@ -181,14 +175,12 @@ def get_mbs_as_bn(model: DAG | BayesianNetwork, center: [str]):
 
 # @print_execution_time # took ~13ms
 def verify_all_slo_parameters_known(model: BayesianNetwork, data):
-    for variable in ["success", "in_time", "fps", "pixel", "stream_count"]:
-        cpd = model.get_cpds(variable)
+    for variable in ["success", "in_time", "fps", "pixel", "stream_count", "bitrate"]:
         for _, row in data.iterrows():
             if row[variable] not in model.__getattribute__("states")[variable]:
                 return False
 
         for v in model.get_markov_blanket(variable):
-            cpd = model.get_cpds(v)
             for _, row in data.iterrows():
                 if row[v] not in model.__getattribute__("states")[v]:
                     return False
@@ -220,11 +212,13 @@ def interpolate_values(matrix):
     return interpolated_data
 
 
-def prepare_samples(samples, t_distance):
+def prepare_samples(samples, t_distance, t_total_bitrate):
     samples['bitrate'] = samples['fps'] * samples['pixel']
+    samples['network'] = (samples['bitrate'] * samples['stream_count']) < t_total_bitrate
     samples['in_time'] = samples['execution_time'] <= (1000 / samples['fps'])
 
     samples['bitrate'] = samples['bitrate'].astype(str)
+    samples['network'] = samples['network'].astype(str)
     samples['fps'] = samples['fps'].astype(str)
     samples['pixel'] = samples['pixel'].astype(str)
     samples['stream_count'] = samples['stream_count'].astype(str)
@@ -245,7 +239,7 @@ def prepare_samples(samples, t_distance):
     return samples
 
 
-def export_BN_to_graph(bn: BayesianNetwork | pgmpy.base.DAG, root=None, try_visualization=False, vis_ls=None,
+def export_BN_to_graph(bn: BayesianNetwork or pgmpy.base.DAG, root=None, try_visualization=False, vis_ls=None,
                        save=False,
                        name=None, show=True, color_map=None):
     if vis_ls is None:
@@ -281,10 +275,36 @@ def cap_0_1(num: float):
 
 
 def get_true(param):
-    if len(param.values) > 1:
-        return param.values[1]
-    elif param.__getattribute__("state_names")[param.variables[0]][0] == True:
-        return 1
-    else:
-        return 0
+    if len(param.variables) > 2:
+        raise Exception("How come?")
+    if len(param.variables) == 2:
+        if param.values.shape == (1, 1):
+            if (param.__getattribute__("state_names")[param.variables[0]][0] == 'True' and
+                    param.__getattribute__("state_names")[param.variables[1]][0] == 'True'):
+                return 1
+            else:
+                return 0
+        elif param.values.shape == (2, 1):
+            if (param.__getattribute__("state_names")[param.variables[0]][0] == 'True' or
+                    param.__getattribute__("state_names")[param.variables[1]][0] == 'True'):
+                return param.values[1][0]
+            else:
+                return 0
+        elif param.values.shape == (1, 2):
+            if (param.__getattribute__("state_names")[param.variables[0]][0] == 'True' or
+                    param.__getattribute__("state_names")[param.variables[1]][0] == 'True'):
+                return param.values[0][1]
+            else:
+                return 0
+        elif param.values.shape == (2, 2):
+            return param.values[1][1]
+        else:
+            return param.values[1]
+    elif len(param.variables) == 1:
+        if param.values.shape == (2, 1):
+            return param.values[1]
+        elif param.__getattribute__("state_names")[param.variables[0]][0] == True:
+            return 1
+        else:
+            return 0
         # else param.values[0]

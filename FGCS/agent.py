@@ -10,7 +10,6 @@ from VideoProcessor import *
 from http_client import HttpClient
 
 HTTP_SERVER = os.environ.get('HTTP_SERVER')
-
 if HTTP_SERVER:
     print(f'Found ENV value for HTTP_SERVER: {HTTP_SERVER}')
 else:
@@ -18,22 +17,29 @@ else:
     print(f"Didn't find ENV value for HTTP_SERVER, default to: {HTTP_SERVER}")
 
 DEVICE_NAME = os.environ.get('DEVICE_NAME')
-
 if DEVICE_NAME:
     print(f'Found ENV value for DEVICE_NAME: {DEVICE_NAME}')
 else:
     DEVICE_NAME = "Unknown"
     print(f"Didn't find ENV value for DEVICE_NAME, default to: {DEVICE_NAME}")
 
+CLEAN_RESTART = os.environ.get('CLEAN_RESTART')
+if CLEAN_RESTART:
+    print(f'Found ENV value for CLEAN_RESTART: {CLEAN_RESTART}')
+else:
+    CLEAN_RESTART = False
+    print(f"Didn't find ENV value for CLEAN_RESTART, default to: {CLEAN_RESTART}")
+
 
 privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-aci = ACI(distance_slo=50, network_slo=(420 * 30 * 5), load_model="model.xml")
+model_name = "model.xml" if CLEAN_RESTART else None
+aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name)
 
-c_pixel = ACI.pixel_list[5]
-c_fps = ACI.fps_list[4]
+c_pixel = ACI.pixel_list[1]
+c_fps = ACI.fps_list[2]
 c_mode = None
 
 new_data = False
@@ -44,7 +50,7 @@ util_fgcs.clear_performance_history('../data/Performance_History.csv')
 video_path = "../video_data/"
 
 http_client = HttpClient(HOST=HTTP_SERVER)
-# http_client.override_stream_config(5)
+# http_client.override_stream_config(10)
 
 # Function for the background loop
 def processing_loop():

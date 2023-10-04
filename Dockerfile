@@ -2,6 +2,7 @@
 FROM python:3.10-slim-buster
 ENV HTTP_SERVER=""
 ENV DEVICE_NAME=""
+ENV CLEAN_RESTART=""
 
 #Local dependencies for cv2
 RUN apt-get update

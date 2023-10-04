@@ -27,18 +27,18 @@ class ACI:
     fps_list = [14, 18, 22, 26, 30]
     bitrate_dict = {}
 
-    # TODO: 30 * 180 and 300 * 18 are identical!!
+    # (30 * 180 and 300 * 18 are identical!!)
     for pair in itertools.product(pixel_list, fps_list):
         bitrate = pair[0] * pair[1]
         bitrate_dict.update({bitrate: [pair[0], pair[1]]})
 
-    def __init__(self, load_model=None, distance_slo=40, network_slo=99999):
+    def __init__(self, load_model=None, distance_slo=40, network_slo=(420*30*10)):
         self.c_distance_bar = distance_slo
         self.c_network_bar = network_slo
         if load_model:
             print("Loading pretained model")
             self.model = XMLBIFReader(load_model).get_model()
-            util_fgcs.export_BN_to_graph(self.model, vis_ls=["circo"], save=True, name="raw_model")
+            util_fgcs.export_BN_to_graph(self.model, vis_ls=['circo'], save=True, name="raw_model")
             self.foster_bn_retrain = 0.2
             self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"),
                                                          self.c_distance_bar, self.c_network_bar)
@@ -104,13 +104,14 @@ class ACI:
         else:
             self.retrain_parameter()
 
+        pv, ra = self.SLOs_fulfilled(self.current_batch)
         self.calculate_factors(self.model, c_pixel, c_fps, c_stream_count)
-        p, f, pv, ra = self.get_best_configuration()
+        p_next, f_next, pv_est, ra_est = self.get_best_configuration()
 
         # end_time = time.time()
         # execution_time_ms = (end_time - start_time) * 1000.0
         # self.function_time.append(execution_time_ms)
-        return int(p), int(f), pv, ra
+        return int(p_next), int(f_next), pv_est, ra_est, (c_pixel, c_fps, pv, ra)
 
     def get_best_configuration(self):
         pv_interpolated = util_fgcs.interpolate_values(self.pv_matrix)
@@ -235,7 +236,11 @@ class ACI:
             scoring_method=scoring_method, max_indegree=4, epsilon=1,
         )
 
-        util_fgcs.export_BN_to_graph(dag, vis_ls=["circo"], save=True, name="raw_model")
+        # TODO: Remove again
+        if dag.has_edge("bitrate", "distance"):
+            dag.remove_edge("bitrate", "distance")
+        dag.add_edge("fps", "distance")
+        util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model")
 
         # self.latest_structure = dag.copy()
         self.model = BayesianNetwork(ebunch=dag)
@@ -247,9 +252,17 @@ class ACI:
         self.current_batch = samples
 
     def SLOs_fulfilled(self, batch: pd.DataFrame):
-        # TODO: Create more sophisticated SLOs
+        batch['in_time'] = batch['in_time'].map({'True': True, 'False': False})
+        batch['network'] = batch['network'].map({'True': True, 'False': False})
+        batch['distance'] = batch['distance'].map({'True': True, 'False': False})
+        batch['success'] = batch['success'].map({'True': True, 'False': False})
+
         ratio_in_time = batch[batch["in_time"]].size / batch.size
-        if ratio_in_time > 0.8:
-            return True
-        else:
-            return False
+        ratio_network = batch[batch["network"]].size / batch.size
+        ratio_distance = batch[batch["distance"]].size / batch.size
+        ratio_success = batch[batch["success"]].size / batch.size
+
+        pv = ratio_distance * ratio_success
+        ra = ratio_in_time * ratio_network
+
+        return pv, ra

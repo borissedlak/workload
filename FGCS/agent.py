@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 
@@ -8,16 +9,31 @@ from ACI import ACI
 from VideoProcessor import *
 from http_client import HttpClient
 
-device_name = "Laptop"
+HTTP_SERVER = os.environ.get('HTTP_SERVER')
+
+if HTTP_SERVER:
+    print(f'Found ENV value for HTTP_SERVER: {HTTP_SERVER}')
+else:
+    HTTP_SERVER = "127.0.0.1"
+    print(f"Didn't find ENV value for HTTP_SERVER, default to: {HTTP_SERVER}")
+
+DEVICE_NAME = os.environ.get('DEVICE_NAME')
+
+if DEVICE_NAME:
+    print(f'Found ENV value for DEVICE_NAME: {DEVICE_NAME}')
+else:
+    DEVICE_NAME = "Unknown"
+    print(f"Didn't find ENV value for DEVICE_NAME, default to: {DEVICE_NAME}")
+
 
 privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
-detector = VideoProcessor(device_name=device_name, privacy_chain=chain, display_stats=False, simulate_fps=True)
+detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-aci = ACI(distance_slo=30, network_slo=(420 * 30 * 4), load_model="model.xml")
+aci = ACI(distance_slo=50, network_slo=(420 * 30 * 5), load_model="model.xml")
 
-c_pixel = ACI.pixel_list[4]
-c_fps = ACI.fps_list[2]
+c_pixel = ACI.pixel_list[5]
+c_fps = ACI.fps_list[4]
 c_mode = None
 
 new_data = False
@@ -25,14 +41,16 @@ override_next_config = None
 
 inferred_config_hist = []
 util_fgcs.clear_performance_history('../data/Performance_History.csv')
+video_path = "../video_data/"
 
-http_client = HttpClient()
+http_client = HttpClient(HOST=HTTP_SERVER)
+# http_client.override_stream_config(5)
 
 # Function for the background loop
 def processing_loop():
     global c_pixel, c_fps, new_data
     while True:
-        detector.processVideo(video_path="../video_data/",
+        detector.processVideo(video_path=video_path,
                               video_info=(c_pixel, c_fps, http_client.get_latest_stream_config()),
                               show_result=False)
         new_data = True
@@ -55,14 +73,15 @@ class ACIBackgroundThread(threading.Thread):
                 if new_data:
                     new_data = False
                     d_threads = http_client.get_latest_stream_config()
-                    (new_pixel, new_fps, pv, ra) = aci.iterate(str(d_threads))
-                    http_client.send_stats(new_pixel, new_fps, pv, ra, d_threads, device_name)
+                    (new_pixel, new_fps, pv, ra, real) = aci.iterate(str(d_threads))
+                    past_pixel, past_fps, past_pv, past_ra = real
+                    http_client.send_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME)
                     inferred_config_hist.append((new_pixel, new_fps))
                     if override_next_config:
                         c_pixel, c_fps = override_next_config
                         override_next_config = None
                     else:
-                        1+1# c_pixel, c_fps = new_pixel, new_fps
+                        c_pixel, c_fps = new_pixel, new_fps
                 else:
                     time.sleep(0.2)
             except Exception as e:

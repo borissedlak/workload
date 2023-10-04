@@ -1,9 +1,10 @@
 import csv
+from datetime import datetime
 
 from flask import Flask, request
 
 app = Flask(__name__)
-csv_file_path = "../FGCS/slo_stream_results.csv"
+csv_file_path = "slo_stream_results.csv"
 
 
 @app.route("/stats")
@@ -17,10 +18,10 @@ def hello():
 
     with open(csv_file_path, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
-        csv_writer.writerow([pixel, fps, pv, ra, threads, device_name])
+        csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name])
 
     # TODO: Make the regression and divide optimal number of threads
     return "1,0"
 
 
-app.run(port=8080)
+app.run(host='0.0.0.0', port=8080)

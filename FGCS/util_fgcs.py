@@ -129,11 +129,9 @@ def get_surprise_for_data(model: BayesianNetwork, data):
     # Create an inference object
     inference = VariableElimination(get_mbs_as_bn(model, ["success", "in_time", "network", "distance"]))
 
-    # Calculate BIC and AIC for each variable
     bic_sum = 0.0
-    # aic_sum = 0.0
     try:
-        for variable in ["success"]:
+        for variable in ["success", "in_time", "network", "distance"]:
             cpd = model.get_cpds(variable)
             log_likelihood = 0.0
             evidence_variables = model.get_markov_blanket(variable)
@@ -151,11 +149,9 @@ def get_surprise_for_data(model: BayesianNetwork, data):
             bic = -2 * log_likelihood + k * np.log(n)
             bic_sum += bic
     except ValueError or KeyError as e:
-        print_in_red(f"Should not happen after safeguard function!!!!" + e)
+        print_in_red(f"Should not happen after safeguard function!!!!" + str(e))
 
     return bic_sum
-    # print(f"BIC {bic_sum}")
-    # print(f"AIC {aic_sum}")
 
 
 # @print_execution_time # takes ~2ms
@@ -175,7 +171,7 @@ def get_mbs_as_bn(model: DAG or BayesianNetwork, center: [str]):
 
 # @print_execution_time # took ~13ms
 def verify_all_slo_parameters_known(model: BayesianNetwork, data):
-    for variable in ["success", "in_time", "fps", "pixel", "stream_count", "bitrate"]:
+    for variable in ["success", "in_time", "fps", "pixel", "stream_count", "bitrate", "network", "distance"]:
         for _, row in data.iterrows():
             if row[variable] not in model.__getattribute__("states")[variable]:
                 return False

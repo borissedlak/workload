@@ -1,23 +1,16 @@
-ffmpeg -ss 00:00:00 -to 00:00:10 -i original.mp4 -c copy original_cut.mp4
+ffplay -vf eq=brightness=-0.25:saturation=1.5 original.mp4
+ffmpeg -i original.mp4 -vf "boxblur=3:1" abcd.mp4
+ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -vf "boxblur=3:1" -c:a copy original_cut.mp4
+ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -vf eq=brightness=-0.25:saturation=1.5 -c:a copy original_cut.mp4
 
-ffmpeg -y -i original_cut.mp4 -filter:v scale=-1:720 -c:a copy 720p_30.mp4
-ffmpeg -y -i original_cut.mp4 -filter:v scale=854:480 -c:a copy 480p_30.mp4
+ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -c copy original_cut.mp4
+
 ffmpeg -y -i original_cut.mp4 -filter:v scale=748:420 -c:a copy 420p_30.mp4
 ffmpeg -y -i original_cut.mp4 -filter:v scale=-1:360 -c:a copy 360p_30.mp4
 ffmpeg -y -i original_cut.mp4 -filter:v scale=532:300 -c:a copy 300p_30.mp4
 ffmpeg -y -i original_cut.mp4 -filter:v scale=426:240 -c:a copy 240p_30.mp4
 ffmpeg -y -i original_cut.mp4 -filter:v scale=-1:180 -c:a copy 180p_30.mp4
 ffmpeg -y -i original_cut.mp4 -filter:v scale=212:120 -c:a copy 120p_30.mp4
-
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 26 720p_26.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 22 720p_22.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 18 720p_18.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 14 720p_14.mp4
-
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 26 480p_26.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 22 480p_22.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 18 480p_18.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 14 480p_14.mp4
 
 ffmpeg -y -i 420p_30.mp4 -vf "setpts=PTS" -r 26 420p_26.mp4
 ffmpeg -y -i 420p_30.mp4 -vf "setpts=PTS" -r 22 420p_22.mp4
@@ -49,6 +42,18 @@ ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 22 120p_22.mp4
 ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 18 120p_18.mp4
 ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 14 120p_14.mp4
 
+ffmpeg -y -i original_cut.mp4 -filter:v scale=-1:720 -c:a copy 720p_30.mp4
+ffmpeg -y -i original_cut.mp4 -filter:v scale=854:480 -c:a copy 480p_30.mp4
+
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 26 720p_26.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 22 720p_22.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 18 720p_18.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 14 720p_14.mp4
+
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 26 480p_26.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 22 480p_22.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 18 480p_18.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 14 480p_14.mp4
 
 
 ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 30 720p_30.mp4

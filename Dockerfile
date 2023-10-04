@@ -1,10 +1,12 @@
 # set base image (host OS)
 FROM python:3.10-slim-buster
+ENV HTTP_SERVER=""
+ENV DEVICE_NAME=""
 
 #Local dependencies for cv2
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
-RUN apt-get install gcc python3-dev -y
+RUN apt-get install gcc python3-dev graphviz -y
 
 # set the working directory in the container
 WORKDIR /src/

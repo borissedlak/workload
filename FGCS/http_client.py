@@ -9,11 +9,11 @@ class HttpClient:
         self.http_connection = None
         self.STATS_PATH = "/stats"
         self._open_connection()
-        # self.start_listen()
         self.latest_config = 1
         self.ignore_response = False
 
     def _open_connection(self):
+        print(f"Opening HTTP Connection with {self.HOST} and {self.PORT}")
         self.http_connection = http.client.HTTPConnection(self.HOST, self.PORT)
 
     def send_stats(self, pixel, fps, pv, ra, threads, device_name):

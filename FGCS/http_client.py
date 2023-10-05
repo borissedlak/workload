@@ -17,8 +17,8 @@ class HttpClient:
         print(f"Opening HTTP Connection with {self.HOST} and {self.PORT}")
         self.http_connection = http.client.HTTPConnection(self.HOST, self.PORT)
 
-    def send_system_stats(self, cpu, device_name, disabled_aci):
-        query_string = f"?cpu={cpu}&device_name={device_name}&disabled_aci={disabled_aci}"
+    def send_system_stats(self, cpu, device_name, disabled_aci, gpu_available):
+        query_string = f"?cpu={cpu}&device_name={device_name}&disabled_aci={disabled_aci}&gpu_available={gpu_available}"
         self.http_connection.request("GET", self.SYSTEM_STATS_PATH + query_string)
         response = self.http_connection.getresponse()
 

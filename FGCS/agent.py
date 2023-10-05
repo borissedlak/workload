@@ -39,7 +39,7 @@ else:
 
 SEND_SYSTEM_STATS = os.environ.get('SEND_SYSTEM_STATS')
 if SEND_SYSTEM_STATS:
-    print(f'Found ENV value for CLEAN_RESTART: {SEND_SYSTEM_STATS}')
+    print(f'Found ENV value for SEND_SYSTEM_STATS: {SEND_SYSTEM_STATS}')
 else:
     SEND_SYSTEM_STATS = False
     print(f"Didn't find ENV value for SEND_SYSTEM_STATS, default to: {SEND_SYSTEM_STATS}")
@@ -73,7 +73,7 @@ def processing_loop():
                               video_info=(c_pixel, c_fps, http_client.get_latest_stream_config()),
                               show_result=False)
         if SEND_SYSTEM_STATS:
-            http_client.send_system_stats(int(psutil.cpu_percent()), DEVICE_NAME, DISABLE_ACI)
+            http_client.send_system_stats(int(psutil.cpu_percent()), DEVICE_NAME, DISABLE_ACI, detector.gpu_available)
         new_data = True
 
 

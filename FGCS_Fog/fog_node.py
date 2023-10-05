@@ -29,10 +29,11 @@ def system():
     cpu = int(request.args.get('cpu'))
     device_name = request.args.get('device_name')
     disabled_aci = request.args.get('disabled_aci')
+    gpu_available = request.args.get('gpu_available')
 
     with open(csv_file_path_system, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
-        csv_writer.writerow([datetime.now(), cpu, device_name, disabled_aci])
+        csv_writer.writerow([datetime.now(), cpu, device_name, disabled_aci,gpu_available])
 
     return "success"
 

@@ -1,6 +1,6 @@
 ffplay -vf eq=brightness=-0.25:saturation=1.5 original.mp4
-ffmpeg -i original.mp4 -vf "boxblur=3:1" abcd.mp4
-ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -vf "boxblur=3:1" -c:a copy original_cut.mp4
+ffmpeg -y -i original.mp4 -vf "boxblur=4:1" abcd.mp4
+ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -vf "boxblur=4:1" -c:a copy original_cut.mp4
 ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -vf eq=brightness=-0.25:saturation=1.5 -c:a copy original_cut.mp4
 
 ffmpeg -y -ss 00:00:00 -to 00:00:10 -i original.mp4 -c copy original_cut.mp4
@@ -104,7 +104,7 @@ http://delock-3259.local/
 
 
 docker buildx build -t basta55/workload --platform linux/arm64 --load .
-docker buildx build -t basta55/workload-gpu:latest -f ./Dockerfile_369 --platform linux/arm64 --load .
+docker buildx build -t basta55/workload-gpu:latest -f ./DockerfileGPU --platform linux/arm64 --load .
 docker cp eloquent_davinci:/data/ $HOME/
 
 120p = 25440

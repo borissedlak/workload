@@ -30,12 +30,25 @@ else:
     CLEAN_RESTART = False
     print(f"Didn't find ENV value for CLEAN_RESTART, default to: {CLEAN_RESTART}")
 
+DISABLE_ACI = os.environ.get('DISABLE_ACI')
+if DISABLE_ACI:
+    print(f'Found ENV value for DISABLE_ACI: {DISABLE_ACI}')
+else:
+    DISABLE_ACI = False
+    print(f"Didn't find ENV value for DISABLE_ACI, default to: {DISABLE_ACI}")
+
+SEND_SYSTEM_STATS = os.environ.get('SEND_SYSTEM_STATS')
+if SEND_SYSTEM_STATS:
+    print(f'Found ENV value for CLEAN_RESTART: {SEND_SYSTEM_STATS}')
+else:
+    SEND_SYSTEM_STATS = False
+    print(f"Didn't find ENV value for SEND_SYSTEM_STATS, default to: {SEND_SYSTEM_STATS}")
 
 privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-model_name = "model.xml" if CLEAN_RESTART else None
+model_name = None if CLEAN_RESTART else "model.xml"
 aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name)
 
 c_pixel = ACI.pixel_list[1]
@@ -59,6 +72,8 @@ def processing_loop():
         detector.processVideo(video_path=video_path,
                               video_info=(c_pixel, c_fps, http_client.get_latest_stream_config()),
                               show_result=False)
+        if SEND_SYSTEM_STATS:
+            http_client.send_system_stats(int(psutil.cpu_percent()), DEVICE_NAME, DISABLE_ACI)
         new_data = True
 
 
@@ -81,7 +96,7 @@ class ACIBackgroundThread(threading.Thread):
                     d_threads = http_client.get_latest_stream_config()
                     (new_pixel, new_fps, pv, ra, real) = aci.iterate(str(d_threads))
                     past_pixel, past_fps, past_pv, past_ra = real
-                    http_client.send_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME)
+                    http_client.send_app_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME)
                     inferred_config_hist.append((new_pixel, new_fps))
                     if override_next_config:
                         c_pixel, c_fps = override_next_config
@@ -102,8 +117,9 @@ class ACIBackgroundThread(threading.Thread):
                 # self.start()
 
 
-background_thread = ACIBackgroundThread()
-background_thread.start()
+if not DISABLE_ACI:
+    background_thread = ACIBackgroundThread()
+    background_thread.start()
 
 # Main loop to read commands from the CLI
 while True:

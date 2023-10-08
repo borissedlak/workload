@@ -179,12 +179,6 @@ class ACI:
             target_data = np.array([y for x1, x2, x3, y in self.valid_stream_values_pv])
             self.stream_regression_model_pv.fit(input_data, target_data)
 
-            # x_range = np.linspace(1, 10, 100)  # Adjust the number of points as needed
-            # y_pred_full = self.stream_regression_model_time.predict(self.poly_features.fit_transform(x_range))
-            # fig, ax = plt.subplots()
-            # # ax.scatter(x_utilization, y_delay_per_part, label='Observations', marker='o')
-            # ax.plot(x_range, y_pred_full, label='Full Data', color='green')
-
             for p, f, s in unknown_combinations:
                 input_vector = self.poly_features.fit_transform(np.array([[p, f, s]]))
                 pv_predict = util_fgcs.cap_0_1(self.stream_regression_model_pv.predict(input_vector)[0])

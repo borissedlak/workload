@@ -49,7 +49,7 @@ chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
 model_name = None if CLEAN_RESTART else "model.xml"
-aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name)
+aci = ACI(distance_slo=20, network_slo=(420 * 30 * 10), load_model=model_name)
 
 c_pixel = ACI.pixel_list[1]
 c_fps = ACI.fps_list[2]
@@ -136,7 +136,6 @@ while True:
             aci.initialize_bn()
         elif user_input == "e":
             aci.export_model()
-        elif user_input == "q":
-            aci.export_model()
-            # TODO: Upload file
-            sys.exit()
+        # elif user_input == "q":
+        #     aci.export_model()
+        #     sys.exit()

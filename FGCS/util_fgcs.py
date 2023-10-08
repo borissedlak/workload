@@ -56,6 +56,7 @@ def write_execution_times(write_store, number_threads=1):
             i += number_threads
         write_store = result
 
+    # TODO: This assumes that still all elements are in the write_store, but the duplicates were filtered out
     sum_other_elements = 0
     for tup in write_store[number_threads:]:
         sum_other_elements += tup[7]
@@ -210,7 +211,7 @@ def interpolate_values(matrix):
 
 def prepare_samples(samples, t_distance, t_total_bitrate):
     samples['bitrate'] = samples['fps'] * samples['pixel']
-    samples['network'] = (samples['bitrate'] * samples['stream_count']) < t_total_bitrate
+    samples['network'] = (samples['bitrate'] * samples['stream_count']) <= t_total_bitrate
     samples['in_time'] = samples['execution_time'] <= (1000 / samples['fps'])
 
     samples['bitrate'] = samples['bitrate'].astype(str)

@@ -87,7 +87,6 @@ def get_center_from_box(box):
     return center_x, center_y
 
 
-# TODO: Maybe revert and simply take the absolute pixel distance and find some use case where this matches
 def get_relative_distance_between_points(p1, p2, img):
     p1_x, p1_y = p1
     p2_x, p2_y = p2

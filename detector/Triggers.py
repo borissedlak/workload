@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 from os.path import join, dirname
 from typing import Tuple
 
-import torch
 import cv2
 import numpy as np
 import onnxruntime as ort

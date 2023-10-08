@@ -20,12 +20,14 @@ def hello():
     ra = round(float(request.args.get('ra')), 2)
     threads = int(request.args.get('threads'))
     device_name = request.args.get('device_name')
+    gpu = int(request.args.get('gpu'))
 
     with open(csv_file_path_app, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
-        csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name])
+        csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name, gpu])
 
     # TODO: Make the regression and divide optimal number of threads
+    # TODO: I can create a scenario with ~20 streams, calculate the result, and assign the results to each device name
 
     counter += 1
     if counter >= 100:

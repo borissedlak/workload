@@ -49,7 +49,7 @@ chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
 model_name = None if CLEAN_RESTART else "model.xml"
-aci = ACI(distance_slo=20, network_slo=(420 * 30 * 10), load_model=model_name)
+aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name)
 
 c_pixel = ACI.pixel_list[1]
 c_fps = ACI.fps_list[2]
@@ -63,6 +63,8 @@ util_fgcs.clear_performance_history('../data/Performance_History.csv')
 video_path = "../video_data/"
 
 http_client = HttpClient(HOST=HTTP_SERVER)
+
+
 # http_client.override_stream_config(10)
 
 # Function for the background loop
@@ -96,7 +98,8 @@ class ACIBackgroundThread(threading.Thread):
                     d_threads = http_client.get_latest_stream_config()
                     (new_pixel, new_fps, pv, ra, real) = aci.iterate(str(d_threads))
                     past_pixel, past_fps, past_pv, past_ra = real
-                    http_client.send_app_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME)
+                    http_client.send_app_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME,
+                                               detector.gpu_available)
                     inferred_config_hist.append((new_pixel, new_fps))
                     if override_next_config:
                         c_pixel, c_fps = override_next_config

@@ -13,7 +13,7 @@ counter = 0
 stream = 1
 
 scm = ScalingModel()
-scm.shuffle_load(20)
+scm.shuffle_load(25)
 
 
 @app.route("/stats")

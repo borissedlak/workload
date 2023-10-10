@@ -236,7 +236,7 @@ class ACI:
         if dag.has_edge("bitrate", "distance"):
             dag.remove_edge("bitrate", "distance")
         dag.add_edge("fps", "distance")
-        util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model")
+        util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model", show=self.show_img)
 
         # self.latest_structure = dag.copy()
         self.model = BayesianNetwork(ebunch=dag)

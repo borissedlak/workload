@@ -48,8 +48,8 @@ privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
-model_name = None if CLEAN_RESTART else "model.xml"
-aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name)
+model_name = None if CLEAN_RESTART else f"model_{DEVICE_NAME}.xml"
+aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name, device_name=DEVICE_NAME)
 
 c_pixel = ACI.pixel_list[1]
 c_fps = ACI.fps_list[2]
@@ -63,8 +63,6 @@ util_fgcs.clear_performance_history('../data/Performance_History.csv')
 video_path = "../video_data/"
 
 http_client = HttpClient(HOST=HTTP_SERVER)
-
-
 # http_client.override_stream_config(10)
 
 # Function for the background loop
@@ -138,7 +136,7 @@ while True:
         elif user_input == "i":
             aci.initialize_bn()
         elif user_input == "e":
-            aci.export_model()
+            aci.export_model(DEVICE_NAME)
         # elif user_input == "q":
         #     aci.export_model()
         #     sys.exit()

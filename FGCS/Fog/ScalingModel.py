@@ -11,9 +11,10 @@ from sklearn.preprocessing import PolynomialFeatures
 class ScalingModel:
     def __init__(self):
         self.regression_models = {}
-        self.poly_features = PolynomialFeatures(degree=2)
-        self.device_models = ["Xavier", "Laptop"]
-        self.physical_devices = [("Xavier", 0), ("Xavier", 1), ("Laptop", 0)]
+        self.poly_features = PolynomialFeatures(degree=1)
+        self.device_models = ["Xavier", "Laptop", "Orin"]
+        self.physical_devices = [("Xavier", 0), ("Xavier", 1), ("Laptop", 0), ("Orin", 1)]
+        self.load_devices = None
         for s in self.device_models:  # , "Orin", "Nano"]:
             self.regression_models[s] = self.load_device_model(s)
 
@@ -40,32 +41,25 @@ class ScalingModel:
 
     def shuffle_load(self, total_streams):
         i = 0
-        load_devices = {d: 0 for d in self.physical_devices}
+        self.load_devices = {d: 0 for d in self.physical_devices}
 
         while i < total_streams:
             best_delta = (None, -999, None)
 
             for d, gpu in self.physical_devices:
                 # current = self.predict(d, load_devices[d], gpu)
-                potential_next = self.predict(d, load_devices[(d, gpu)] + 1, gpu)
+                potential_next = self.predict(d, self.load_devices[(d, gpu)] + 1, gpu)
                 fact = (potential_next[0][0] * potential_next[0][1])
 
                 if fact > best_delta[1]:
                     best_delta = (d, fact, gpu)
 
-            load_devices[(best_delta[0], best_delta[2])] += 1
+            self.load_devices[(best_delta[0], best_delta[2])] += 1
             i += 1
 
-        for d in load_devices:
+        for d in self.load_devices:
             g = "GPU" if d[1] == 1 else "CPU"
-            print(f"{d[0]} {g} got assigned {load_devices[d]} streams")
+            print(f"{d[0]} {g} got assigned {self.load_devices[d]} streams")
 
-    def get_assigned_streams(self, device_name):
-        return None
-
-
-a = ScalingModel()
-# print(a.predict("Xavier", 10, 1))
-# print(a.predict("Xavier", 10, 0))
-
-a.shuffle_load(20)
+    def get_assigned_streams(self, device_name, gpu):
+        return self.load_devices[(device_name, gpu)]

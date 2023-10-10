@@ -32,7 +32,7 @@ class ACI:
         bitrate = pair[0] * pair[1]
         bitrate_dict.update({bitrate: [pair[0], pair[1]]})
 
-    def __init__(self, load_model=None, distance_slo=40, network_slo=(420*30*10)):
+    def __init__(self, device_name, load_model=None, distance_slo=40, network_slo=(420 * 30 * 10)):
         self.c_distance_bar = distance_slo
         self.c_network_bar = network_slo
         if load_model:
@@ -40,7 +40,7 @@ class ACI:
             self.model = XMLBIFReader(load_model).get_model()
             util_fgcs.export_BN_to_graph(self.model, vis_ls=['circo'], save=True, name="raw_model")
             self.foster_bn_retrain = 0.2
-            self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"),
+            self.backup_data = util_fgcs.prepare_samples(pd.read_csv(f"backup_entire_data_{device_name}.csv"),
                                                          self.c_distance_bar, self.c_network_bar)
         else:
             self.model = None
@@ -213,12 +213,13 @@ class ACI:
     def initialize_bn(self):
         self.bnl(self.entire_training_data)
 
-    def export_model(self):
+    def export_model(self, device_name):
         # self.entire_training_data.to_csv("backup_entire_data.csv", index=False)
         shutil.copy("../data/Performance_History.csv", "backup_entire_data.csv")
         writer = XMLBIFWriter(self.model)
-        writer.write_xmlbif(filename='model.xml')
-        print("Model exported as 'model.xml'")
+        file_name = f'model_{device_name}.xml'
+        writer.write_xmlbif(filename=file_name)
+        print(f"Model exported as '{file_name}'")
 
     @print_execution_time
     def bnl(self, samples):

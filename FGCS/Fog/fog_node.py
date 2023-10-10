@@ -3,12 +3,17 @@ from datetime import datetime
 
 from flask import Flask, request
 
+from ScalingModel import ScalingModel
+
 app = Flask(__name__)
 csv_file_path_app = "slo_stream_results.csv"
 csv_file_path_system = "system_load_results.csv"
 
 counter = 0
 stream = 1
+
+scm = ScalingModel()
+scm.shuffle_load(20)
 
 
 @app.route("/stats")
@@ -26,17 +31,16 @@ def hello():
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name, gpu])
 
-    # TODO: Make the regression and divide optimal number of threads
-    # TODO: I can create a scenario with ~20 streams, calculate the result, and assign the results to each device name
+    # counter += 1
+    # if counter >= 100:
+    #     counter = 0
+    #
+    #     if stream <= 14:
+    #         stream += 1
+    #     else:
+    #         stream = 1
 
-    counter += 1
-    if counter >= 100:
-        counter = 0
-
-        if stream <= 14:
-            stream += 1
-        else:
-            stream = 1
+    stream = scm.get_assigned_streams(device_name=device_name, gpu=gpu)
 
     return str(stream) + ",0"
 

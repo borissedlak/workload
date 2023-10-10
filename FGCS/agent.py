@@ -44,6 +44,13 @@ else:
     SEND_SYSTEM_STATS = False
     print(f"Didn't find ENV value for SEND_SYSTEM_STATS, default to: {SEND_SYSTEM_STATS}")
 
+SHOW_IMG = os.environ.get('SHOW_IMG')
+if SHOW_IMG:
+    print(f'Found ENV value for SHOW_IMG: {SHOW_IMG}')
+else:
+    SHOW_IMG = False
+    print(f"Didn't find ENV value for SHOW_IMG, default to: {SHOW_IMG}")
+
 privacy_model = ModelParser.parseModel(Models.model_1)
 chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)

@@ -1,4 +1,5 @@
 import csv
+import threading
 from datetime import datetime
 
 from flask import Flask, request
@@ -12,8 +13,10 @@ csv_file_path_system = "system_load_results.csv"
 counter = 0
 stream = 1
 
+NUMBER_STREAMS = 15
+
 scm = ScalingModel()
-scm.shuffle_load(25)
+scm.shuffle_load(NUMBER_STREAMS)
 
 
 @app.route("/stats")
@@ -59,4 +62,24 @@ def system():
     return "success"
 
 
-app.run(host='0.0.0.0', port=8080)
+def run_server():
+    app.run(host='0.0.0.0', port=8080)
+
+
+background_thread = threading.Thread(target=run_server)
+background_thread.daemon = True
+background_thread.start()
+
+while True:
+    user_input = input()
+
+    if user_input == "p":
+        scm.print_current_assignment()
+    elif user_input == "r":
+        scm.shuffle_load(NUMBER_STREAMS)
+    elif user_input.startswith("o: "):
+        override_text = user_input[3:]
+        real_assignment = eval(override_text)
+        scm.override_assignment(real_assignment)
+        scm.print_current_assignment()
+        #o: {('Laptop', 0): 6, ('Orin', 1): 6, ('Xavier', 0): 0, ('Xavier', 1): 3}

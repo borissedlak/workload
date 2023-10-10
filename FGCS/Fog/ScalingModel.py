@@ -57,9 +57,16 @@ class ScalingModel:
             self.load_devices[(best_delta[0], best_delta[2])] += 1
             i += 1
 
-        for d in self.load_devices:
-            g = "GPU" if d[1] == 1 else "CPU"
-            print(f"{d[0]} {g} got assigned {self.load_devices[d]} streams")
+        self.print_current_assignment()
 
     def get_assigned_streams(self, device_name, gpu):
         return self.load_devices[(device_name, gpu)]
+
+    def override_assignment(self, assignment):
+        self.load_devices = assignment
+
+    def print_current_assignment(self):
+
+        for d in self.load_devices:
+            g = "GPU" if d[1] == 1 else "CPU"
+            print(f"{d[0]} {g} got assigned {self.load_devices[d]} streams")

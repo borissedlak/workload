@@ -13,7 +13,7 @@ csv_file_path_system = "system_load_results.csv"
 counter = 0
 stream = 1
 
-NUMBER_STREAMS = 15
+NUMBER_STREAMS = 25
 
 scm = ScalingModel()
 scm.shuffle_load(NUMBER_STREAMS)
@@ -82,4 +82,8 @@ while True:
         real_assignment = eval(override_text)
         scm.override_assignment(real_assignment)
         scm.print_current_assignment()
-        #o: {('Laptop', 0): 6, ('Orin', 1): 6, ('Xavier', 0): 0, ('Xavier', 1): 3}
+
+#1 Inferred) o: {('Laptop', 0): 9, ('Orin', 1): 9, ('Xavier', 0): 1, ('Xavier', 1): 5, ('Nano', 0): 1}
+#2 Single) o: {('Laptop', 0): 1, ('Orin', 1): 1, ('Xavier', 0): 1, ('Xavier', 1): 1, ('Nano', 0): 1}
+#3 Random) o: {('Laptop', 0): 4, ('Orin', 1): 4, ('Xavier', 0): 5, ('Xavier', 1): 8, ('Nano', 0): 3}
+#4 Equal) o: {('Laptop', 0): 5, ('Orin', 1): 5, ('Xavier', 0): 5, ('Xavier', 1): 5, ('Nano', 0): 5}

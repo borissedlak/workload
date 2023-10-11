@@ -12,10 +12,10 @@ class ScalingModel:
     def __init__(self):
         self.regression_models = {}
         self.poly_features = PolynomialFeatures(degree=1)
-        self.device_models = ["Xavier", "Laptop", "Orin"]
-        self.physical_devices = [("Xavier", 0), ("Xavier", 1), ("Laptop", 0), ("Orin", 1)]
+        self.device_models = ["Xavier", "Laptop", "Orin", "Nano"]
+        self.physical_devices = [("Xavier", 0), ("Xavier", 1), ("Laptop", 0), ("Orin", 1), ("Nano", 0)]
         self.load_devices = None
-        for s in self.device_models:  # , "Orin", "Nano"]:
+        for s in self.device_models:
             self.regression_models[s] = self.load_device_model(s)
 
     def load_device_model(self, device_name):

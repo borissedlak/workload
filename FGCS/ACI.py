@@ -216,6 +216,7 @@ class ACI:
 
     def export_model(self, device_name):
         # self.entire_training_data.to_csv("backup_entire_data.csv", index=False)
+        # TODO: Should append
         shutil.copy("../data/Performance_History.csv", "backup_entire_data.csv")
         writer = XMLBIFWriter(self.model)
         file_name = f'model_{device_name}.xml'

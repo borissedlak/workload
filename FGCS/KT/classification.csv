@@ -1,0 +1,6 @@
+device,gpu,cpu
+xavier0,0,2
+xavier1,2,2
+laptop,0,4
+nano,0,1
+orin,2,3

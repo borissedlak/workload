@@ -215,9 +215,23 @@ class ACI:
         self.bnl(self.entire_training_data)
 
     def export_model(self, device_name):
-        # self.entire_training_data.to_csv("backup_entire_data.csv", index=False)
-        # TODO: Should append
-        shutil.copy("../data/Performance_History.csv", "backup_entire_data.csv")
+        # Define the output file path
+        output_path = f"backup_entire_data_{device_name}.csv"
+
+        # Read the content of both input files
+        with (open(f"backup_entire_data_{device_name}.csv", 'r') as file1,
+              open("../data/Performance_History.csv", 'r') as file2):
+            file1_contents = file1.read()
+            file2_contents = file2.read()
+
+        # Concatenate the contents
+        concatenated_contents = file1_contents + file2_contents
+
+        # Write the concatenated content to the output file
+        with open(output_path, 'w') as output_file:
+            output_file.write(concatenated_contents)
+
+        # shutil.copy("../data/Performance_History.csv", f"backup_entire_data_{device_name}.csv")
         writer = XMLBIFWriter(self.model)
         file_name = f'model_{device_name}.xml'
         writer.write_xmlbif(filename=file_name)

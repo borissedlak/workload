@@ -1,7 +1,10 @@
 import csv
+import threading
 from datetime import datetime
 
 from flask import Flask, request
+
+from ScalingModel import ScalingModel
 
 app = Flask(__name__)
 csv_file_path_app = "slo_stream_results.csv"
@@ -9,6 +12,11 @@ csv_file_path_system = "system_load_results.csv"
 
 counter = 0
 stream = 1
+
+NUMBER_STREAMS = 25
+
+scm = ScalingModel()
+scm.shuffle_load(NUMBER_STREAMS)
 
 
 @app.route("/stats")
@@ -26,17 +34,16 @@ def hello():
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name, gpu])
 
-    # TODO: Make the regression and divide optimal number of threads
-    # TODO: I can create a scenario with ~20 streams, calculate the result, and assign the results to each device name
+    # counter += 1
+    # if counter >= 100:
+    #     counter = 0
+    #
+    #     if stream <= 14:
+    #         stream += 1
+    #     else:
+    #         stream = 1
 
-    counter += 1
-    if counter >= 100:
-        counter = 0
-
-        if stream <= 14:
-            stream += 1
-        else:
-            stream = 1
+    stream = scm.get_assigned_streams(device_name=device_name, gpu=gpu)
 
     return str(stream) + ",0"
 
@@ -55,4 +62,28 @@ def system():
     return "success"
 
 
-app.run(host='0.0.0.0', port=8080)
+def run_server():
+    app.run(host='0.0.0.0', port=8080)
+
+
+background_thread = threading.Thread(target=run_server)
+background_thread.daemon = True
+background_thread.start()
+
+while True:
+    user_input = input()
+
+    if user_input == "p":
+        scm.print_current_assignment()
+    elif user_input == "r":
+        scm.shuffle_load(NUMBER_STREAMS)
+    elif user_input.startswith("o: "):
+        override_text = user_input[3:]
+        real_assignment = eval(override_text)
+        scm.override_assignment(real_assignment)
+        scm.print_current_assignment()
+
+#1 Inferred) o: {('Laptop', 0): 9, ('Orin', 1): 9, ('Xavier', 0): 1, ('Xavier', 1): 5, ('Nano', 0): 1}
+#2 Single) o: {('Laptop', 0): 1, ('Orin', 1): 1, ('Xavier', 0): 1, ('Xavier', 1): 1, ('Nano', 0): 1}
+#3 Random) o: {('Laptop', 0): 4, ('Orin', 1): 4, ('Xavier', 0): 5, ('Xavier', 1): 8, ('Nano', 0): 3}
+#4 Equal) o: {('Laptop', 0): 5, ('Orin', 1): 5, ('Xavier', 0): 5, ('Xavier', 1): 5, ('Nano', 0): 5}

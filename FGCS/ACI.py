@@ -32,15 +32,16 @@ class ACI:
         bitrate = pair[0] * pair[1]
         bitrate_dict.update({bitrate: [pair[0], pair[1]]})
 
-    def __init__(self, load_model=None, distance_slo=40, network_slo=(420*30*10)):
+    def __init__(self, device_name, show_img=False, load_model=None, distance_slo=40, network_slo=(420 * 30 * 10)):
         self.c_distance_bar = distance_slo
         self.c_network_bar = network_slo
+        self.show_img = show_img
         if load_model:
             print("Loading pretained model")
             self.model = XMLBIFReader(load_model).get_model()
-            util_fgcs.export_BN_to_graph(self.model, vis_ls=['circo'], save=True, name="raw_model")
+            util_fgcs.export_BN_to_graph(self.model, vis_ls=['circo'], save=True, name="raw_model", show=self.show_img)
             self.foster_bn_retrain = 0.2
-            self.backup_data = util_fgcs.prepare_samples(pd.read_csv("backup_entire_data.csv"),
+            self.backup_data = util_fgcs.prepare_samples(pd.read_csv(f"backup_entire_data_{device_name}.csv"),
                                                          self.c_distance_bar, self.c_network_bar)
         else:
             self.model = None
@@ -213,12 +214,14 @@ class ACI:
     def initialize_bn(self):
         self.bnl(self.entire_training_data)
 
-    def export_model(self):
+    def export_model(self, device_name):
         # self.entire_training_data.to_csv("backup_entire_data.csv", index=False)
+        # TODO: Should append
         shutil.copy("../data/Performance_History.csv", "backup_entire_data.csv")
         writer = XMLBIFWriter(self.model)
-        writer.write_xmlbif(filename='model.xml')
-        print("Model exported as 'model.xml'")
+        file_name = f'model_{device_name}.xml'
+        writer.write_xmlbif(filename=file_name)
+        print(f"Model exported as '{file_name}'")
 
     @print_execution_time
     def bnl(self, samples):
@@ -234,7 +237,7 @@ class ACI:
         if dag.has_edge("bitrate", "distance"):
             dag.remove_edge("bitrate", "distance")
         dag.add_edge("fps", "distance")
-        util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model")
+        util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model", show=self.show_img)
 
         # self.latest_structure = dag.copy()
         self.model = BayesianNetwork(ebunch=dag)

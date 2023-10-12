@@ -67,3 +67,27 @@ print(ra)
 model_name = 'model_Xavier_GPU_merged.xml'
 XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
 print(f"Model exported as '{model_name}'")
+
+model_Laptop.fit(curated_data_Xavier_CPU)
+model_name = 'model_Xavier_CPU.xml'
+XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
+print(f"Model exported as '{model_name}'")
+
+model_Laptop.fit(curated_data_Laptop)
+model_name = 'model_Laptop.xml'
+XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
+print(f"Model exported as '{model_name}'")
+
+raw_data_Nano = pd.read_csv("backup_entire_data_Xavier_CPU.csv")
+curated_data_Nano = prepare_samples(raw_data_Nano, t_distance=50, t_total_bitrate=(420 * 30 * 10))
+model_Laptop.fit(curated_data_Nano)
+model_name = 'model_Nano.xml'
+XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
+print(f"Model exported as '{model_name}'")
+
+raw_data_Orin = pd.read_csv("backup_entire_data_Orin.csv")
+curated_data_Orin = prepare_samples(raw_data_Orin, t_distance=50, t_total_bitrate=(420 * 30 * 10))
+model_Laptop.fit(curated_data_Orin)
+model_name = 'model_Orin.xml'
+XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
+print(f"Model exported as '{model_name}'")

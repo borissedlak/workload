@@ -2,7 +2,7 @@ import pandas as pd
 from pgmpy.inference import VariableElimination
 from pgmpy.readwrite import XMLBIFReader, XMLBIFWriter
 
-from FGCS import util_fgcs
+import util_fgcs
 from util_fgcs import prepare_samples, print_execution_time
 
 # list1 = {
@@ -48,14 +48,20 @@ ra = util_fgcs.get_true(
     inference.query(variables=["in_time", "network"], evidence={'bitrate': br, 'stream_count': stream}))
 print(ra)
 
-filtered_data = curated_data_Xavier_CPU[
-    ~curated_data_Xavier_CPU['bitrate'].isin(['3120', '4680', '1680', '2160', '4320'])]
-past_data_length = len(raw_data_Laptop)  # 19748
+# filtered_data = curated_data_Xavier_CPU[
+#     ~curated_data_Xavier_CPU['bitrate'].isin(['3120', '4680', '1680', '2160', '4320'])]
+
+
+filtered_data = curated_data_Laptop[
+    ~curated_data_Laptop['stream_count'].isin(['11', '12', '13', '14', '15'])]
+
+
+# past_data_length = len(raw_data_Laptop)  # 19748
 
 
 @print_execution_time
 def merge():
-    model_Laptop.fit_update(filtered_data, n_prev_samples=past_data_length)
+    model_Xavier_CPU.fit_update(filtered_data, n_prev_samples=len(raw_data_Xavier_CPU))
 
 
 merge()

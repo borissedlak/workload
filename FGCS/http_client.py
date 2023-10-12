@@ -27,8 +27,7 @@ class HttpClient:
         response = self.SESSION.get(f"http://{self.HOST}:{self.PORT}{self.SYSTEM_STATS_PATH}", params=query_params)
         response.raise_for_status()  # Raise an exception for non-2xx status codes
 
-
-    def send_app_stats(self, pixel, fps, pv, ra, threads, device_name, gpu):
+    def send_app_stats(self, pixel, fps, pv, ra, threads, device_name, gpu, surprise):
         query_params = {
             "pixel": pixel,
             "fps": fps,
@@ -36,7 +35,8 @@ class HttpClient:
             "ra": ra,
             "threads": threads,
             "device_name": device_name,
-            "gpu": gpu
+            "gpu": gpu,
+            "surprise": surprise
         }
         response = self.SESSION.get(f"http://{self.HOST}:{self.PORT}{self.APP_STATS_PATH}", params=query_params)
         c_threads, x = response.text.split(",")

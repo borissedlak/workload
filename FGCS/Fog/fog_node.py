@@ -29,10 +29,11 @@ def hello():
     threads = int(request.args.get('threads'))
     device_name = request.args.get('device_name')
     gpu = int(request.args.get('gpu'))
+    surprise = int(round(float(request.args.get('surprise')), 0))
 
     with open(csv_file_path_app, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
-        csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name, gpu])
+        csv_writer.writerow([datetime.now(), pixel, fps, pv, ra, threads, device_name, gpu, surprise])
 
     # counter += 1
     # if counter >= 100:

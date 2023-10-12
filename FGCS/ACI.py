@@ -84,9 +84,7 @@ class ACI:
         else:
             self.entire_training_data = pd.concat([self.entire_training_data, self.current_batch], ignore_index=True)
 
-        # prediction = None
-        # actual = self.SLOs_fulfilled(self.current_batch)
-
+        s = -1
         if util_fgcs.verify_all_slo_parameters_known(self.model, self.current_batch):
             s = util_fgcs.get_surprise_for_data(self.model, self.current_batch)
             self.surprise_history.append(s)
@@ -112,7 +110,7 @@ class ACI:
         # end_time = time.time()
         # execution_time_ms = (end_time - start_time) * 1000.0
         # self.function_time.append(execution_time_ms)
-        return int(p_next), int(f_next), pv_est, ra_est, (c_pixel, c_fps, pv, ra)
+        return int(p_next), int(f_next), pv_est, ra_est, (c_pixel, c_fps, pv, ra), s
 
     def get_best_configuration(self):
         pv_interpolated = util_fgcs.interpolate_values(self.pv_matrix)

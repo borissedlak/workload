@@ -101,10 +101,10 @@ class ACIBackgroundThread(threading.Thread):
                 if new_data:
                     new_data = False
                     d_threads = http_client.get_latest_stream_config()
-                    (new_pixel, new_fps, pv, ra, real) = aci.iterate(str(d_threads))
+                    (new_pixel, new_fps, pv, ra, real, surprise) = aci.iterate(str(d_threads))
                     past_pixel, past_fps, past_pv, past_ra = real
                     http_client.send_app_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME,
-                                               detector.gpu_available)
+                                               detector.gpu_available, surprise)
                     inferred_config_hist.append((new_pixel, new_fps))
                     if override_next_config:
                         c_pixel, c_fps = override_next_config

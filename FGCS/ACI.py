@@ -218,7 +218,7 @@ class ACI:
         # Define the output file path
         output_path = f"backup_entire_data_{device_name}.csv"
 
-        # Read the content of both input files
+        # TODO: Remove the header from the second file
         with open(f"backup_entire_data_{device_name}.csv", 'r') as file1, open("../data/Performance_History.csv", 'r') as file2:
             file1_contents = file1.read()
             file2_contents = file2.read()

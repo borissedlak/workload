@@ -204,7 +204,7 @@ class ACI:
                 past_data_length = len(self.past_training_data)
                 if hasattr(self, 'backup_data'):
                     past_data_length += len(self.backup_data)
-                self.model.fit_update(self.current_batch, n_prev_samples=past_data_length)
+                self.model.fit_update(self.current_batch, n_prev_samples=(past_data_length / 3))
             except ValueError as ve:
                 print(f"Caught a ValueError: {ve}")
                 self.retrain_parameter(full_retrain=True)

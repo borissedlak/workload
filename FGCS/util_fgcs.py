@@ -133,9 +133,12 @@ def get_surprise_for_data(model: BayesianNetwork, data):
     bic_sum = 0.0
     try:
         for variable in ["success", "in_time", "network", "distance"]:
-            cpd = model.get_cpds(variable)
+            cpd = get_mbs_as_bn(model, [variable]).get_cpds(variable)
             log_likelihood = 0.0
             evidence_variables = model.get_markov_blanket(variable)
+
+            # if 'consumption' in evidence_variables:
+            #     evidence_variables.remove('consumption')
 
             for _, row in data.iterrows():
                 evidence = {col: row[col] for col in evidence_variables}

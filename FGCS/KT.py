@@ -5,27 +5,7 @@ from pgmpy.readwrite import XMLBIFReader, XMLBIFWriter
 import util_fgcs
 from util_fgcs import prepare_samples, print_execution_time
 
-# list1 = {
-#     '10800', '10920', '12600', '1680', '2160', '2520', '2640', '3120',
-#     '3240', '3360', '3600', '3960', '4200', '4320', '4680', '5040',
-#     '5280', '5400', '5880', '6240', '6480', '6600', '7200', '7560',
-#     '7800', '7920', '9000', '9240', '9360'
-# }
-#
-# list2 = [
-#     '10800', '10920', '12600', '2520', '2640', '3240', '3360', '3600',
-#     '3960', '4200', '5040', '5280', '5400', '5880', '6240', '6480',
-#     '6600', '7200', '7560', '7800', '7920', '9000', '9240', '9360'
-# ]
-#
-# # Find elements that are only in the first list
-# only_in_list1 = set(list1) - set(list2)
-#
-# # Print the elements that are only in the first list
-# print(only_in_list1)
-
-
-br = str(18 * 360)
+br = str(30 * 420)
 stream = '1'
 
 model_Xavier_CPU = XMLBIFReader("model_Xavier_CPU.xml").get_model()
@@ -65,12 +45,12 @@ def merge():
 
 
 merge()
-inference = VariableElimination(model_Laptop)
+inference = VariableElimination(model_Xavier_CPU)
 ra = util_fgcs.get_true(
     inference.query(variables=["in_time", "network"], evidence={'bitrate': br, 'stream_count': stream}))
 print(ra)
 
-model_name = 'model_Xavier_GPU_merged.xml'
+model_name = 'model_Xavier_GPU.xml'
 XMLBIFWriter(model_Laptop).write_xmlbif(model_name)
 print(f"Model exported as '{model_name}'")
 

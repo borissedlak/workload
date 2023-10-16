@@ -56,7 +56,7 @@ chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
 model_name = None if CLEAN_RESTART else f"model_{DEVICE_NAME}.xml"
-aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name, device_name=DEVICE_NAME)
+aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name, device_name=DEVICE_NAME, show_img=SHOW_IMG)
 
 c_pixel = ACI.pixel_list[1]
 c_fps = ACI.fps_list[2]
@@ -110,7 +110,7 @@ class ACIBackgroundThread(threading.Thread):
                         c_pixel, c_fps = override_next_config
                         override_next_config = None
                     else:
-                        c_pixel, c_fps = new_pixel, new_fps
+                        1+1#c_pixel, c_fps = new_pixel, new_fps
                 else:
                     time.sleep(0.2)
             except Exception as e:

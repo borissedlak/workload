@@ -47,7 +47,6 @@ class ScalingModel:
             best_delta = (None, -999, None)
 
             for d, gpu in self.physical_devices:
-                # current = self.predict(d, load_devices[d], gpu)
                 potential_next = self.predict(d, self.load_devices[(d, gpu)] + 1, gpu)
                 fact = (potential_next[0][0] * potential_next[0][1])
 

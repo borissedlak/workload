@@ -96,7 +96,6 @@ class ACI:
                     self.foster_bn_retrain = 0.2
                 elif self.foster_bn_retrain == 0.2:
                     self.foster_bn_retrain = 0.0
-                # So far it retrains the structure if the values are very surprising, not sure if that 100% fine
                 self.initialize_bn()
             elif s > (1 * mean_surprise_last_10_values):
                 self.retrain_parameter()
@@ -107,9 +106,6 @@ class ACI:
         self.calculate_factors(self.model, c_pixel, c_fps, c_stream_count)
         p_next, f_next, pv_est, ra_est = self.get_best_configuration()
 
-        # end_time = time.time()
-        # execution_time_ms = (end_time - start_time) * 1000.0
-        # self.function_time.append(execution_time_ms)
         return int(p_next), int(f_next), pv_est, ra_est, (c_pixel, c_fps, pv, ra), s
 
     def get_best_configuration(self):
@@ -244,13 +240,11 @@ class ACI:
             scoring_method=scoring_method, max_indegree=4, epsilon=1,
         )
 
-        # TODO: Remove again
-        if dag.has_edge("bitrate", "distance"):
-            dag.remove_edge("bitrate", "distance")
-        dag.add_edge("fps", "distance")
+        # if dag.has_edge("bitrate", "distance"):
+        #     dag.remove_edge("bitrate", "distance")
+        # dag.add_edge("fps", "distance")
         util_fgcs.export_BN_to_graph(dag, vis_ls=['circo'], save=True, name="raw_model", show=self.show_img)
 
-        # self.latest_structure = dag.copy()
         self.model = BayesianNetwork(ebunch=dag)
         self.model.fit(data=samples, estimator=MaximumLikelihoodEstimator)
 

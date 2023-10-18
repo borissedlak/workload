@@ -1,5 +1,6 @@
 import pandas as pd
 from pgmpy.inference import VariableElimination
+from pgmpy.models import BayesianNetwork
 from pgmpy.readwrite import XMLBIFReader, XMLBIFWriter
 
 import util_fgcs
@@ -36,7 +37,37 @@ filtered_data = curated_data_Laptop[
     ~curated_data_Laptop['stream_count'].isin(['11', '12', '13', '14', '15'])]
 
 
-# past_data_length = len(raw_data_Laptop)  # 19748
+def merge_cpts():
+    merged_model = BayesianNetwork(ebunch=model_Laptop.edges())
+
+    # Iterate through the CPTs of the first model (model1)
+    for node in ['cpu_utilization']:
+        cpd1 = model_Laptop.get_cpds(node)
+
+        # Check if the node exists in the second model (model2)
+        if node in model_Xavier_CPU.nodes():
+            cpd2 = model_Xavier_CPU.get_cpds(node)
+
+            # Merge the two CPTs
+            merged_cpd = cpd1.product(cpd2)
+            merged_cpd.normalize()
+
+            # Add the merged CPT to the merged_model
+            merged_model.add_cpds(merged_cpd)
+        else:
+            # If the node does not exist in the second model, add the CPT from the first model to the merged_model
+            merged_model.add_cpds(cpd1)
+
+    # Iterate through the CPTs of the second model (model2) and add any CPTs not already added
+    for node in model_Xavier_CPU.nodes():
+        if node not in merged_model.nodes():
+            cpd2 = model_Xavier_CPU.get_cpds(node)
+            merged_model.add_cpds(cpd2)
+
+    return merged_model
+
+
+# merged_model = merge_cpts()
 
 
 @print_execution_time

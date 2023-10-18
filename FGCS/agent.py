@@ -110,7 +110,7 @@ class ACIBackgroundThread(threading.Thread):
                         c_pixel, c_fps = override_next_config
                         override_next_config = None
                     else:
-                        1+1#c_pixel, c_fps = new_pixel, new_fps
+                        c_pixel, c_fps = new_pixel, new_fps
                 else:
                     time.sleep(0.2)
             except Exception as e:

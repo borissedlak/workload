@@ -13,6 +13,7 @@ class HttpClient:
         self.SYSTEM_STATS_PATH = "/system"
         self.APP_STATS_PATH = "/stats"
         self.latest_config = 1
+        self.latest_latency = 1
         self.ignore_response = False
 
         print(f"Opening HTTP Connection with {self.HOST} and {self.PORT}")
@@ -39,9 +40,10 @@ class HttpClient:
             "surprise": surprise
         }
         response = self.SESSION.get(f"http://{self.HOST}:{self.PORT}{self.APP_STATS_PATH}", params=query_params)
-        c_threads, x = response.text.split(",")
+        c_threads, c_latency = response.text.split(",")
         if not self.ignore_response:
             self.latest_config = int(c_threads)
+            self.latest_latency = int(c_latency)
         # response.raise_for_status()  # Raise an exception for non-2xx status codes
 
         # background_thread = threading.Thread(target=self._receive_in_other_thread)
@@ -57,7 +59,7 @@ class HttpClient:
     #     # print(f"Received {c_threads}")
 
     def get_latest_stream_config(self):
-        return self.latest_config
+        return self.latest_config, self.latest_latency
 
     def override_stream_config(self, d_threads):
         self.ignore_response = True

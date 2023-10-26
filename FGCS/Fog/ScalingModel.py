@@ -69,3 +69,7 @@ class ScalingModel:
         for d in self.load_devices:
             g = "GPU" if d[1] == 1 else "CPU"
             print(f"{d[0]} {g} got assigned {self.load_devices[d]} streams")
+
+
+# s = ScalingModel()
+# s.shuffle_load(10)

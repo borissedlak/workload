@@ -100,7 +100,7 @@ class ACIBackgroundThread(threading.Thread):
             try:
                 if new_data:
                     new_data = False
-                    d_threads = http_client.get_latest_stream_config()
+                    d_threads = http_client.get_latest_stream_config()[0]
                     (new_pixel, new_fps, pv, ra, real, surprise) = aci.iterate(str(d_threads))
                     past_pixel, past_fps, past_pv, past_ra = real
                     http_client.send_app_stats(past_pixel, past_fps, past_pv, past_ra, d_threads, DEVICE_NAME,
@@ -135,7 +135,7 @@ while True:
 
     # Check if the user entered a command
     if user_input:
-        threads = http_client.get_latest_stream_config()
+        threads = http_client.get_latest_stream_config()[0]
         if user_input == "+":
             http_client.override_stream_config(threads + 1)
         elif user_input == "-":

@@ -14,6 +14,7 @@ counter = 0
 stream = 1
 
 NUMBER_STREAMS = 25
+latency_c = 1
 
 scm = ScalingModel()
 scm.shuffle_load(NUMBER_STREAMS)
@@ -46,7 +47,7 @@ def hello():
 
     stream = scm.get_assigned_streams(device_name=device_name, gpu=gpu)
 
-    return str(stream) + ",0"
+    return str(stream) + "," + str(latency_c)
 
 
 @app.route("/system")
@@ -83,6 +84,9 @@ while True:
         real_assignment = eval(override_text)
         scm.override_assignment(real_assignment)
         scm.print_current_assignment()
+    elif user_input.startswith("l: "):
+        override_text = user_input[3:]
+        latency_c = int(override_text)
 
 #1 Inferred) o: {('Laptop', 0): 9, ('Orin', 1): 9, ('Xavier', 0): 1, ('Xavier', 1): 5, ('Nano', 0): 1}
 #2 Single) o: {('Laptop', 0): 1, ('Orin', 1): 1, ('Xavier', 0): 1, ('Xavier', 1): 1, ('Nano', 0): 1}

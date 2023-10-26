@@ -37,7 +37,8 @@ class VideoProcessor:
 
         self.write_store = []
 
-        (source_res, source_fps, number_threads) = video_info
+        (source_res, source_fps, stream_config) = video_info
+        (number_threads, latency_factor) = stream_config
         print(f"Now processing: {source_res}p{source_fps} with {number_threads} Thread(s)")
 
         available_time_frame = (1000 / source_fps)
@@ -63,7 +64,7 @@ class VideoProcessor:
 
             threads = []
             for _ in range(number_threads):
-                thread = threading.Thread(target=self.processFrame_v3, args=(source_fps, number_threads))
+                thread = threading.Thread(target=self.processFrame_v3, args=(source_fps, number_threads, latency_factor))
                 threads.append(thread)
                 thread.start()
             for thread in threads:
@@ -95,7 +96,7 @@ class VideoProcessor:
 
         write_execution_times(self.write_store, number_threads)
 
-    def processFrame_v3(self, fps=None, number_threads=1):
+    def processFrame_v3(self, fps=None, number_threads=1, latency_factor =1):
         boxes = None
         detected = False
         overall_time = datetime.now()
@@ -124,6 +125,7 @@ class VideoProcessor:
                 boxes = None
 
         overall_delta = getExecutionTime(datetime.now(), overall_time)
+        overall_delta *= latency_factor
         self.write_store.append((overall_delta, datetime.now(), -1,
                                  psutil.virtual_memory().percent,
                                  self.img.shape[0], fps, detected, self.distance,

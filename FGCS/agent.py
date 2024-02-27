@@ -56,7 +56,7 @@ chain = privacy_model.getChainForSource("video", "webcam")
 detector = VideoProcessor(device_name=DEVICE_NAME, privacy_chain=chain, display_stats=False, simulate_fps=True)
 
 model_name = None if CLEAN_RESTART else f"model_{DEVICE_NAME}.xml"
-aci = ACI(distance_slo=50, network_slo=(420 * 30 * 10), load_model=model_name, device_name=DEVICE_NAME, show_img=SHOW_IMG)
+aci = ACI(distance_slo=100, network_slo=(420 * 30 * 10), load_model=model_name, device_name=DEVICE_NAME, show_img=SHOW_IMG)
 
 c_pixel = ACI.pixel_list[1]
 c_fps = ACI.fps_list[2]
@@ -70,7 +70,7 @@ util_fgcs.clear_performance_history('../data/Performance_History.csv')
 video_path = "../video_data/"
 
 http_client = HttpClient(HOST=HTTP_SERVER)
-# http_client.override_stream_config(10)
+http_client.override_stream_config(1)
 
 # Function for the background loop
 def processing_loop():

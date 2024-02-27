@@ -9,9 +9,8 @@ import psutil
 from imutils.video import FPS
 
 import util
-import ModelParser
 from ModelParser import PrivacyChain
-from util import getExecutionTime, write_execution_times
+from util_fgcs import getExecutionTime, write_execution_times
 
 
 class VideoDetector:

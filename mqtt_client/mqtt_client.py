@@ -1,4 +1,5 @@
 import json
+import time
 
 import paho.mqtt.client as mqtt
 
@@ -33,15 +34,15 @@ def setup():
     client.on_message = on_message
     client.on_disconnect = on_disconnect
 
-    broker_address = "192.168.1.153"
+    broker_address = "192.168.0.32"
     port = 1883  # Default MQTT port
     client.connect(broker_address, port=port)
 
     client.loop_start()
 
     # Run the network loop indefinitely
-    # while True:
-    #     time.sleep(999999999)
+    while True:
+        time.sleep(999999999)
 
     # Or run the network loop for a specific duration (e.g., 10 seconds)
     # import time

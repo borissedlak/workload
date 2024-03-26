@@ -42,18 +42,25 @@ ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 22 120p_22.mp4
 ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 18 120p_18.mp4
 ffmpeg -y -i 120p_30.mp4 -vf "setpts=PTS" -r 14 120p_14.mp4
 
-ffmpeg -y -i original_cut.mp4 -filter:v scale=-1:720 -c:a copy 720p_30.mp4
-ffmpeg -y -i original_cut.mp4 -filter:v scale=854:480 -c:a copy 480p_30.mp4
+# TODO: Continue from here
+ffmpeg -y -i original_cut_sose.mp4 -c:a copy 1080p_30.mp4
+ffmpeg -y -i original_cut_sose.mp4 -filter:v scale=-1:720 -c:a copy 720p_30.mp4
+ffmpeg -y -i original_cut_sose.mp4 -filter:v scale=854:480 -c:a copy 480p_30.mp4
 
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 26 720p_26.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 22 720p_22.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 18 720p_18.mp4
-ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 14 720p_14.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 35 720p_35.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 25 720p_25.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 20 720p_20.mp4
+ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 15 720p_15.mp4
 
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 26 480p_26.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 22 480p_22.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 18 480p_18.mp4
-ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 14 480p_14.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 35 480p_35.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 25 480p_25.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 20 480p_20.mp4
+ffmpeg -y -i 480p_30.mp4 -vf "setpts=PTS" -r 15 480p_15.mp4
+
+ffmpeg -y -i 1080p_30.mp4 -vf "setpts=PTS" -r 35 1080p_35.mp4
+ffmpeg -y -i 1080p_30.mp4 -vf "setpts=PTS" -r 25 1080p_25.mp4
+ffmpeg -y -i 1080p_30.mp4 -vf "setpts=PTS" -r 20 1080p_20.mp4
+ffmpeg -y -i 1080p_30.mp4 -vf "setpts=PTS" -r 15 1080p_15.mp4
 
 
 ffmpeg -y -i 720p_30.mp4 -vf "setpts=PTS" -r 30 720p_30.mp4

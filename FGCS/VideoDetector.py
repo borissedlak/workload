@@ -9,6 +9,8 @@ import psutil
 from imutils.video import FPS
 
 import util
+from FGCS.ConsumptionRegression import ConsRegression
+from FGCS.Triggers import Face_Trigger
 from ModelParser import PrivacyChain
 from util_fgcs import getExecutionTime, write_execution_times
 
@@ -27,6 +29,8 @@ class VideoDetector:
         self.simulate_fps = simulate_fps
         self.old_center = (0, 0)
         self.distance = 0
+        self.consumption_regression = ConsRegression("PC")
+        self.gpu_available = self.detect_gpu()
 
     def processImage(self, img_path=None, img=None, show_result=False):
         if img_path is not None:
@@ -34,7 +38,7 @@ class VideoDetector:
         else:
             self.img = img
 
-        self.write_store = {"Overall_Chain": []}
+        self.write_store = []
         if self.output_width is not None:
             self.img = imutils.resize(self.img, width=self.output_width)
 
@@ -51,7 +55,7 @@ class VideoDetector:
     def processVideo(self, video_path, video_info, model_name, show_result=False, repeat=1):
 
         if self.write_stats:
-            self.write_store = {"Overall_Chain": []}
+            self.write_store = []
 
         for (source_res, source_fps, number_threads) in video_info:
             for x in range(repeat):
@@ -83,12 +87,14 @@ class VideoDetector:
 
                     # Adding one CPU Utilization for all entries in the thread
                     cpu = psutil.cpu_percent()
-                    last_x_items = list(self.write_store["Overall_Chain"])[-number_threads:]
-                    self.write_store["Overall_Chain"] = self.write_store["Overall_Chain"][:-number_threads]
+                    consumption = self.consumption_regression.predict(cpu, self.gpu_available)
+                    last_x_items = list(self.write_store)[-number_threads:]
+                    self.write_store = self.write_store[:-number_threads]
                     for item in last_x_items:
                         i = list(item)
                         i[2] = cpu
-                        self.write_store["Overall_Chain"].append(tuple(i))
+                        i[8] = consumption
+                        self.write_store.append(tuple(i))
 
                     # self.processFrame_v3(source_fps)
                     if show_result:
@@ -117,7 +123,7 @@ class VideoDetector:
                 print("FPS: {:.2f}".format(fps.fps()))
 
         if self.write_stats:
-            write_execution_times(self.write_store, "video_loop_1", model_name)
+            write_execution_times(self.write_store)
 
     def processFrame_v3(self, fps=None, number_threads=1):
         boxes = None
@@ -155,13 +161,18 @@ class VideoDetector:
                 cmA.commandFunction.transform(self.img, options=args_with_boxes)  # self.img =
                 boxes = None
 
-            delta = getExecutionTime(function_name, datetime.now(), start_time)
+            # delta = getExecutionTime(function_name, datetime.now(), start_time)
 
         if self.write_stats:
-            overall_delta = getExecutionTime("Overall Chain", datetime.now(), overall_time)
-            self.write_store["Overall_Chain"].append((overall_delta, datetime.now(), -1,
-                                                      psutil.virtual_memory().percent,
-                                                      self.resolution, fps, detected, self.distance,
-                                                      number_threads
-                                                      # util.get_consumption()
-                                                      ))
+            overall_delta = getExecutionTime(datetime.now(), overall_time)
+            self.write_store.append((overall_delta, datetime.now(), -1,
+                                     psutil.virtual_memory().percent,
+                                     self.img.shape[0], fps, detected, self.distance,
+                                     -1,
+                                     number_threads
+                                     ))
+
+    def detect_gpu(self):
+        face_detector_onnx = Face_Trigger()
+        providers = face_detector_onnx.face_detector.get_providers()
+        return 1 if "CUDAExecutionProvider" in providers else 0
